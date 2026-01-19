@@ -133,6 +133,10 @@ Backend tests that validate controllers, routes, and database interactions.
 
 This structure ensures clear separation of concerns, improved maintainability, and a design that is easy to explain and assess.
 
+---
+
+## Project Tree Structure
+
 ```
 AirAware
 ├─ README.md
@@ -184,6 +188,7 @@ AirAware
    ├─ controllers
    │  ├─ authController.js
    │  ├─ dashboardController.js
+   │  ├─ locationController.js
    │  ├─ thresholdController.js
    │  └─ userController.js
    ├─ db
@@ -194,6 +199,7 @@ AirAware
    ├─ middleware
    │  └─ authMiddleware.js
    ├─ models
+   │  ├─ Auth.js
    │  ├─ Location.js
    │  ├─ Threshold.js
    │  └─ User.js
