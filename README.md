@@ -1,191 +1,134 @@
-# AirAware+ Project Structure Guide
+# AirAware MVC Project Structure Guide
 
-This document explains the purpose of each file and folder in the AirAware+ project. It is intended as a shared reference for the team to maintain a clear layered architecture using vanilla JavaScript, HTML, and CSS.
-
----
-
-## Root HTML Pages (Presentation – UI)
-
-### `index.html` (Login page)
-
-* Entry point to the application
-* Collects basic user login or session start information
-* Contains no business or risk logic
-
-### `threshold.html`
-
-* Allows the user to define their personal pollution tolerance thresholds
-* Focused purely on input and display
-
-### `location.html`
-
-* Allows the user to set or confirm their location (city or coordinates)
-* Does not decide how location is resolved or used
-
-### `dashboard.html`
-
-* Displays air quality information and personalised risk insights
-* Renders data already processed by the application and domain layers
+This document explains the purpose of each folder and key file in the AirAware project. The project follows a **Node.js + Express MVC architecture**, with a clear separation between frontend (public) and backend (server) responsibilities.
 
 ---
 
-## `css/`
+## Root Files
 
-### `main.css`
+### `index.js`
 
-* Global styling for all pages
-* Contains layout, colours, typography, and responsive rules
-* No JavaScript or logic-related concerns
+The main entry point of the application. It starts the Express server and listens for incoming requests on a specified port.
 
----
+### `app.js`
 
-## `js/presentation/` (Presentation Logic)
+Initialises and configures the Express application. This includes registering middleware, serving static files from the public folder, and wiring routes to controllers.
 
-Page-specific JavaScript responsible for:
+### `.env`
 
-* Handling user interactions (clicks, form submissions)
-* Reading input values from the DOM
-* Passing data to the application layer
-* Rendering returned results
+Stores environment variables such as database credentials, JWT secrets, and API keys. This file should never be committed to version control.
 
-### `login.js`
+### `.gitignore`
 
-* Handles login form events
-* Calls the login use case
+Specifies which files and folders should be excluded from Git (for example `node_modules` and `.env`).
 
-### `threshold.js`
+### `README.md`
 
-* Captures user-defined tolerance levels
-* Sends raw input to the application layer
-
-### `location.js`
-
-* Handles location input or browser location permissions
-* Delegates resolution logic elsewhere
-
-### `dashboard.js`
-
-* Requests dashboard data from the application layer
-* Updates UI elements with risk insights
+High-level overview of the project, including setup instructions and a summary of the architecture.
 
 ---
 
-## `js/application/` (Use Cases)
+## `public/` – View Layer (Frontend)
 
-This layer coordinates what the system *does*. It:
+Contains all client-facing files. This represents the **View** in MVC, along with client-side JavaScript for user interaction.
 
-* Orchestrates steps across domain and infrastructure layers
-* Represents user-driven actions
+### `public/index.html`
 
-### `loginUser.js`
+Login and registration page.
 
-* Handles the login flow
-* Stores or retrieves user session data
+### `public/dashboard.html`
 
-### `saveThreshold.js`
+Displays personalised air quality information and risk insights for the user.
 
-* Validates and saves user tolerance preferences
-* Uses domain value objects before persisting
+### `public/threshold.html`
 
-### `resolveLocation.js`
+Allows users to set and update their pollutant tolerance thresholds.
 
-* Determines the user’s active location
-* Coordinates with location services
+### `public/location.html`
 
-### `buildDashboard.js`
+Allows users to select or update their location preferences.
 
-* Retrieves air quality data
-* Invokes domain risk assessment
-* Returns structured data ready for display
+### `public/css/`
 
----
+Contains global styling for the application.
 
-## `js/domain/` (Core Business Logic)
+* `style.css` – Main stylesheet used across all pages.
 
-This is the most important layer. It contains:
+### `public/js/`
 
-* Asthma-related reasoning
-* Pollution interpretation rules
-* No browser, API, or storage dependencies
+Client-side JavaScript files. Each file corresponds to a specific HTML page and handles DOM interaction and API calls.
 
-### `models/`
+* `index.js` – Handles login and registration logic.
+* `dashboard.js` – Fetches and displays dashboard data.
+* `threshold.js` – Handles threshold form submission.
+* `location.js` – Handles location updates.
 
-#### `UserProfile.js`
+### `public/assets/`
 
-* Represents a user and their sensitivity preferences
+Static assets such as images and icons used in the UI.
 
-#### `PollutionReading.js`
+### `public/__tests__/`
 
-* Represents a pollution measurement (PM2.5, NO₂, time, location)
-
-### `services/`
-
-#### `RiskAssessmentService.js`
-
-* Converts pollution readings and user tolerance into risk levels
-* Encapsulates all decision-making logic
-
-### `valueObjects/`
-
-#### `ToleranceLevel.js`
-
-* Defines valid threshold ranges
-* Prevents invalid or inconsistent tolerance values
+Frontend tests that validate client-side behaviour and logic for each page.
 
 ---
 
-## `js/infrastructure/` (External Systems)
+## `server/` – Controller & Model Layer (Backend)
 
-This layer handles all interactions with the outside world.
+Contains all backend logic, including controllers, models, routes, database access, and middleware.
 
-### `airQualityApi.js`
+### `server/controllers/`
 
-* Fetches air quality data from public APIs
-* Returns raw or lightly normalised data
+Controllers handle incoming HTTP requests, coordinate models, and return responses.
 
-### `locationService.js`
+* `authController.js` – Handles user registration and login.
+* `userController.js` – Handles user profile operations.
+* `thresholdController.js` – Handles saving and retrieving threshold data.
+* `dashboardController.js` – Aggregates data from multiple sources for the dashboard.
 
-* Resolves user location via browser APIs or manual input
+### `server/models/`
 
-### `storageService.js`
+Models represent the application’s data structures and interact directly with the database.
 
-* Handles persistence (e.g. localStorage)
-* Isolated so storage can be replaced later if needed
+* `User.js` – User account and authentication data.
+* `Threshold.js` – Pollution tolerance data per user.
+* `Location.js` – User location data.
+
+### `server/routers/`
+
+Defines API endpoints and maps them to controller functions. Routers contain no business logic.
+
+* `authRoutes.js`
+* `userRoutes.js`
+* `thresholdRoutes.js`
+* `dashboardRoutes.js`
+
+### `server/db/`
+
+Responsible for database configuration and setup.
+
+* `connect.js` – Establishes a connection to the PostgreSQL database.
+* `setup.js` – Handles database initialisation and setup tasks.
+* `schema.sql` – Defines the database schema (tables, relationships, constraints).
+
+### `server/middleware/`
+
+Reusable middleware functions applied to routes.
+
+* `authMiddleware.js` – Verifies JWTs and protects authenticated routes.
+
+### `server/__tests__/`
+
+Backend tests that validate controllers, routes, and database interactions.
 
 ---
 
-## `js/config/`
+## Architecture Summary
 
-### `constants.js`
+* **Views** live in the `public` folder and are responsible for presentation.
+* **Controllers** live in `server/controllers` and handle request logic.
+* **Models** live in `server/models` and manage data persistence.
+* **Routes** connect HTTP endpoints to controllers.
+* **Database access** is encapsulated in the `server/db` folder.
 
-* Central place for shared constants
-* Includes pollutant names, default values, and app-wide settings
-
----
-
-## `assets/`
-
-### `icons/`
-
-* Stores UI icons and static visual assets
-
----
-
-## `docs/`
-
-### `architecture.md`
-
-* Explains the chosen architecture
-* Justifies the layered approach
-* References system context and design decisions
-
----
-
-## Guiding Principles
-
-* Presentation never contains business logic
-* Domain never depends on browser or APIs
-* Dependencies always point inwards
-* The system provides decision-support, not medical diagnosis
-
-This structure ensures clarity, maintainability, and strong architectural justification.
+This structure ensures clear separation of concerns, improved maintainability, and a design that is easy to explain and assess.
