@@ -21,7 +21,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 /* Global middleware */
 app.use(cors());
 app.use(express.json());
@@ -31,23 +30,27 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 /* Frontend routes (Views) */
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'homepage', 'homepage.html'));
 });
 
 app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard', 'dashboard.html'));
 });
 
 app.get('/threshold', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'threshold.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'threshold', 'threshold.html'));
 });
 
 app.get('/location', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'location.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'location', 'location.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'login', 'login.html'));
 });
 
 /* API routes */
-// app.use('/api/auth', authRouter);
+app.use('/api/auth', authRouter);
 // app.use('/api/user', authMiddleware, userRouter);
 // app.use('/api/thresholds', authMiddleware, thresholdRouter);
 app.use('/api/location', authMiddleware, locationRouter);
@@ -58,9 +61,9 @@ app.use('/api', (req, res) => {
   res.status(404).json({ message: 'API route not found' });
 });
 
-/* Frontend fallback */
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+/* Frontend fallback (must be LAST) */
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'homepage', 'homepage.html'));
 });
 
 module.exports = app;
