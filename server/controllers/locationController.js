@@ -2,14 +2,50 @@ require('dotenv').config();
 
 const Location = require('../models/Location');
 
-async function getLocation(req, res) {
-    const data = req.body;
-    try {
-        const location = await Location.getLocation(data)
-        
-    } catch (err) {
-        res.status(401).json({error: err.message})
+async function setLocation(req, res) {
+  const data = {
+    userId: req.user?.id,
+    city: req.body?.city,
+    postcode: req.body?.postcode,
+  };
+
+  try {
+    if (!data.userId) {
+      return res.status(401).json({ error: 'Unauthorised' });
     }
+
+    if ((!data.city && !data.postcode) || (data.city && data.postcode)) {
+      return res.status(400).json({
+        error: 'Provide either a city or a postcode',
+      });
+    }
+
+    const location = await Location.setLocation(data);
+
+    return res.status(201).json({ location });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 }
 
-module.exports = { getLocation }
+async function getLocation(req, res) {
+  const data = { userId: req.user?.id };
+
+  try {
+    if (!data.userId) {
+      return res.status(401).json({ error: 'Unauthorised' });
+    }
+
+    const location = await Location.getLocation(data);
+
+    if (!location) {
+      return res.status(404).json({ error: 'No saved location found' });
+    }
+
+    return res.status(200).json({ location });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { setLocation, getLocation };
