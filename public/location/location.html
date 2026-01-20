@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>AirAware+ | Location Settings</title>
-
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -14,30 +12,20 @@
   />
 
   <link rel="stylesheet" href="style.css" />
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-    crossorigin="anonymous"
-    defer
-  ></script>
-
-  <script src="./js/location.js" defer></script>
+  <script src="location.js" defer></script>
 </head>
 
 <body class="page">
   <nav class="nav">
-    
-    <a class="navleft" href="../homepage/homepage.html" aria-label="AirAware Home">
+    <a class="navleft" aria-label="AirAware Home">
       <img class="brandlogo" src="../assets/logo-clear-bg.png" alt="AirAware+" />
     </a>
 
-    
     <div class="navright">
-      <a class="chip" href="../homepage/homepage.html">Homepage</a> <!-- not sure abt href in here-->
-      <a class="chip" href="../homepage/homepage.html">Welcome, User!</a> <!-- not sure abt href in here-->
+      <a class="chip" href="../homepage/homepage.html">Homepage</a>
+      <a class="chip" href="#">Welcome, User!</a>
 
-      <a class="profile" href="../homepage/homepage.html"aria-label="Profile"> <!-- not sure abt href in here-->
+      <a class="profile" href="../user-profile/user.html" aria-label="Profile">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M12 12a4.2 4.2 0 1 0-4.2-4.2A4.2 4.2 0 0 0 12 12Zm0 2.2c-4.1 0-7.4 2.2-7.4 4.9V21h14.8v-1.9c0-2.7-3.3-4.9-7.4-4.9Z"
@@ -48,34 +36,46 @@
   </nav>
 
   <main class="main">
-    <section class="card">
+    <section class="card" aria-label="Location form">
       <img class="cardlogo" src="../assets/logo-clear-bg.png" alt="AirAware+" />
-      
-  <div class="form-body">
-    <h2 class="question">Where are you located?</h2>
 
-    <form class="form">
-      <div class="field">
-        <select class="select" id="city" name="city">
-          <option value="" selected disabled>select your city</option>
-        </select>
-      </div>
+      <h1 class="title">Where are you located?</h1>
 
-      <div class="field">
-        <select class="select" id="region" name="region">
-          <option value="" selected disabled>select your region</option>
-        </select>
-      </div>
+      <p class="subtitle">
+        Enter either a city or a postcode. The other field will be disabled automatically.
+      </p>
 
-      <div class="field">
-        <select class="select" id="postcode" name="postcode">
-          <option value="" selected disabled>select your postcode</option>
-        </select>
-      </div>
-    </form>
-  </div>
-</section>
-      
+      <form class="form" id="locationForm" autocomplete="on">
+        <div class="field">
+          <label class="label" for="cityInput">City</label>
+          <input
+            class="input"
+            id="cityInput"
+            name="city"
+            type="text"
+            placeholder="Type your city (e.g., London)"
+          />
+        </div>
+
+        <div class="divider">or</div>
+
+        <div class="field">
+          <label class="label" for="postcodeInput">Postcode</label>
+          <input
+            class="input"
+            id="postcodeInput"
+            name="postcode"
+            type="text"
+            placeholder="Type your postcode (e.g., SW1P 1RT)"
+          />
+        </div>
+
+
+        <button class="btnPrimary" type="submit">Save location</button>
+        <button class="btnLink" type="button" id="clearBtn">Clear &amp; choose again</button>
+      </form>
+    </section>
   </main>
+
 </body>
 </html>
