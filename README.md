@@ -132,3 +132,79 @@ Backend tests that validate controllers, routes, and database interactions.
 * **Database access** is encapsulated in the `server/db` folder.
 
 This structure ensures clear separation of concerns, improved maintainability, and a design that is easy to explain and assess.
+
+---
+
+## Project Tree Structure
+
+```
+AirAware
+├─ README.md
+├─ docs
+│  ├─ locationLogic.md
+│  └─ userJourney.md
+├─ package-lock.json
+├─ package.json
+├─ public
+│  ├─ __tests__
+│  │  ├─ dashboard.test.js
+│  │  ├─ location.test.js
+│  │  ├─ login.test.js
+│  │  └─ threshold.test.js
+│  ├─ assets
+│  │  ├─ logo-clear-bg.png
+│  │  └─ logo-white-bg.png
+│  ├─ css
+│  │  └─ style.css
+│  ├─ dashboard.html
+│  ├─ index.html
+│  ├─ js
+│  │  ├─ dashboard.js
+│  │  ├─ index.js
+│  │  ├─ location.js
+│  │  └─ threshold.js
+│  ├─ location.html
+│  └─ threshold.html
+└─ server
+   ├─ __tests__
+   │  ├─ integration
+   │  │  ├─ config.js
+   │  │  └─ reset.all.sql
+   │  └─ unit
+   │     ├─ controllers
+   │     │  ├─ authController.test.js
+   │     │  ├─ dashboardController.test.js
+   │     │  ├─ thresholdController.test.js
+   │     │  └─ userController.test.js
+   │     ├─ models
+   │     │  ├─ Auth.test.js
+   │     │  ├─ Location.test.js
+   │     │  ├─ Threshold.test.js
+   │     │  └─ User.test.js
+   │     └─ services
+   │        ├─ airQualityService.test.js
+   │        └─ locationService.test.js
+   ├─ app.js
+   ├─ controllers
+   │  ├─ authController.js
+   │  ├─ dashboardController.js
+   │  ├─ locationController.js
+   │  ├─ thresholdController.js
+   │  └─ userController.js
+   ├─ db
+   │  ├─ connect.js
+   │  ├─ schema.sql
+   │  └─ setup.js
+   ├─ index.js
+   ├─ middleware
+   │  └─ authMiddleware.js
+   ├─ models
+   │  ├─ Auth.js
+   │  ├─ Location.js
+   │  ├─ Threshold.js
+   │  └─ User.js
+   └─ services
+      ├─ airQualityService.js
+      └─ locationService.js
+
+```

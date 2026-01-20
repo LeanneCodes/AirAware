@@ -7,6 +7,7 @@ const authRouter = require('./routers/authRoutes');
 const userRouter = require('./routers/userRoutes');
 const thresholdRouter = require('./routers/thresholdRoutes');
 const dashboardRouter = require('./routers/dashboardRoutes');
+const locationRouter = require('./routers/locationRoutes');
 
 /* Middleware */
 const authMiddleware = require('./middleware/authMiddleware');
@@ -41,11 +42,17 @@ app.get('/location', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/user', authMiddleware, userRouter);
 app.use('/api/thresholds', authMiddleware, thresholdRouter);
+app.use('/api/location', authMiddleware, locationRouter);
 app.use('/api/dashboard', authMiddleware, dashboardRouter);
 
-/* Fallback for unknown routes */
+/* API 404 (only for /api/*) */
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'API route not found' });
+});
+
+/* Frontend fallback */
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 module.exports = app;
