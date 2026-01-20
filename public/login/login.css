@@ -1,0 +1,84 @@
+body {
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+
+    background-image: url("../assets/web-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.page-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    height: 150px;
+}
+
+
+form {
+    width: 320px;
+    padding: 2rem 2rem;
+
+    background: #ffffff;
+    border-radius: 28px;
+    border: 1.5px solid #3b6eea;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+form {
+    transform: translateY(80px);
+}
+
+
+.form-logo {
+    margin-bottom: 1.5rem;
+}
+
+.form-logo img {
+    height: 200px;
+}
+
+
+input[type="email"],
+input[type="password"],
+button {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1rem;
+
+    border-radius: 999px;
+    border: 1.2px solid #3b6eea;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+
+input::placeholder {
+    color: #444;
+}
+
+input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 110, 234, 0.15);
+}
+
+
+button {
+    background: #ffffff;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+button:hover {
+    background: #f2f6ff;
+}
