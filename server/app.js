@@ -14,6 +14,12 @@ const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 
+app.use((req, res, next) => {
+  console.log('APP.JS HIT:', req.method, req.path);
+  next();
+});
+
+
 /* Global middleware */
 app.use(cors());
 app.use(express.json());
@@ -39,11 +45,11 @@ app.get('/location', (req, res) => {
 });
 
 /* API routes */
-app.use('/api/auth', authRouter);
-app.use('/api/user', authMiddleware, userRouter);
-app.use('/api/thresholds', authMiddleware, thresholdRouter);
+// app.use('/api/auth', authRouter);
+// app.use('/api/user', authMiddleware, userRouter);
+// app.use('/api/thresholds', authMiddleware, thresholdRouter);
 app.use('/api/location', authMiddleware, locationRouter);
-app.use('/api/dashboard', authMiddleware, dashboardRouter);
+// app.use('/api/dashboard', authMiddleware, dashboardRouter);
 
 /* API 404 (only for /api/*) */
 app.use('/api', (req, res) => {
