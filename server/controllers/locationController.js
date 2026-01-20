@@ -119,4 +119,27 @@ async function deleteLocation(req, res) {
   }
 }
 
-module.exports = { setLocation, getLocation, updateLocation, validateLocation, deleteLocation };
+async function getLocationHistory(req, res) {
+  const userId = req.user?.id;
+
+  try {
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorised' });
+    }
+
+    const locations = await Location.getUniqueByUserId(userId);
+
+    return res.status(200).json({ locations });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = {
+  setLocation,
+  getLocation,
+  updateLocation,
+  validateLocation,
+  deleteLocation,
+  getLocationHistory,
+};
