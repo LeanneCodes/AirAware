@@ -77,8 +77,21 @@ class Location {
 
         const result = await response.json();
 
+        // Reverse geocode to get city name
+        const reverseUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${result.lat}&lon=${result.lon}&limit=1&appid=${apiKey}`;
+        const reverseResponse = await fetch(reverseUrl);
+
+        let label = `${postcode}, ${result.country}`;
+
+        if (reverseResponse.ok) {
+            const reverseData = await reverseResponse.json();
+            if (reverseData.length && reverseData[0].name) {
+                label = `${reverseData[0].name}, ${result.country}`;
+            }
+        }
+
         return {
-            label: `${result.name}, ${result.country}`,
+            label,
             latitude: result.lat,
             longitude: result.lon,
         };
