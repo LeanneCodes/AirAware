@@ -52,7 +52,7 @@ app.get('/login', (req, res) => {
 /* API routes */
 app.use('/api/auth', authRouter);
 // app.use('/api/user', authMiddleware, userRouter);
-// app.use('/api/thresholds', authMiddleware, thresholdRouter);
+app.use('/api/thresholds', authMiddleware, thresholdRouter);
 app.use('/api/location', authMiddleware, locationRouter);
 // app.use('/api/dashboard', authMiddleware, dashboardRouter);
 

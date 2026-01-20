@@ -38,13 +38,12 @@ CREATE TABLE IF NOT EXISTS thresholds (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 
-  sensitivity_level VARCHAR(8) NOT NULL
-    CHECK (sensitivity_level IN ('low','medium','high')),
+  -- User's trigger level (OpenWeather AQI 1–5). NULL when user selects "I don't know"
+  trigger_aqi INTEGER NULL
+    CHECK (trigger_aqi BETWEEN 1 AND 5),
 
-  pm25_low_max DECIMAL(10,4) NULL,
-  pm25_medium_max DECIMAL(10,4) NULL,
-  no2_low_max DECIMAL(10,4) NULL,
-  no2_medium_max DECIMAL(10,4) NULL,
+  -- If TRUE, app uses the default trigger (e.g. Moderate = 3)
+  use_default BOOLEAN NOT NULL DEFAULT TRUE,
 
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
