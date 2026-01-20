@@ -99,4 +99,24 @@ async function validateLocation(req, res) {
   }
 }
 
-module.exports = { setLocation, getLocation, updateLocation, validateLocation };
+async function deleteLocation(req, res) {
+  const userId = req.user?.id;
+
+  try {
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorised' });
+    }
+
+    const deletedLocation = await Location.deleteLocationByUserId(userId);
+
+    if (!deletedLocation) {
+      return res.status(404).json({ error: 'No saved location found' });
+    }
+
+    return res.status(200).json({ message: 'Location deleted', location: deletedLocation });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { setLocation, getLocation, updateLocation, validateLocation, deleteLocation };
