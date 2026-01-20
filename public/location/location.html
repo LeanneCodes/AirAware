@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AirAware+ | Location Settings</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"
+    defer
+  ></script>
+
+  <script src="./js/location.js" defer></script>
+</head>
+
+<body class="page">
+  <nav class="nav">
+    
+    <a class="navleft" href="../homepage/homepage.html" aria-label="AirAware Home">
+      <img class="brandlogo" src="../assets/logo-clear-bg.png" alt="AirAware+" />
+    </a>
+
+    
+    <div class="navright">
+      <a class="chip" href="../homepage/homepage.html">Homepage</a> <!-- not sure abt href in here-->
+      <a class="chip" href="../homepage/homepage.html">Welcome, User!</a> <!-- not sure abt href in here-->
+
+      <a class="profile" href="../homepage/homepage.html"aria-label="Profile"> <!-- not sure abt href in here-->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 12a4.2 4.2 0 1 0-4.2-4.2A4.2 4.2 0 0 0 12 12Zm0 2.2c-4.1 0-7.4 2.2-7.4 4.9V21h14.8v-1.9c0-2.7-3.3-4.9-7.4-4.9Z"
+          />
+        </svg>
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <section class="card">
+      <img class="cardlogo" src="../assets/logo-clear-bg.png" alt="AirAware+" />
+      
+  <div class="form-body">
+    <h2 class="question">Where are you located?</h2>
+
+    <form class="form">
+      <div class="field">
+        <select class="select" id="city" name="city">
+          <option value="" selected disabled>select your city</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <select class="select" id="region" name="region">
+          <option value="" selected disabled>select your region</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <select class="select" id="postcode" name="postcode">
+          <option value="" selected disabled>select your postcode</option>
+        </select>
+      </div>
+    </form>
+  </div>
+</section>
+      
+  </main>
+</body>
+</html>
