@@ -67,7 +67,7 @@ async function register(req, res) {
       },
     });
   } catch (err) {
-    console.error("REGISTER_ERROR", err);
+    console.log("REGISTER_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
@@ -102,7 +102,7 @@ async function login(req, res) {
       },
     });
   } catch (err) {
-    console.error("LOGIN_ERROR", err);
+    console.log("LOGIN_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }

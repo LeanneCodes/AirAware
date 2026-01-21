@@ -60,10 +60,18 @@ CREATE TABLE IF NOT EXISTS air_quality_readings (
   pm25 DECIMAL(10,4) NULL,
   no2 DECIMAL(10,4) NULL,
   o3 DECIMAL(10,4) NULL,
+  so2 DECIMAL(10,4) NULL,
+  pm10 DECIMAL(10,4) NULL,
+  co DECIMAL(10,4) NULL,
   aqi INTEGER NULL,
 
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE air_quality_readings
+  ADD COLUMN IF NOT EXISTS pm10 DECIMAL(10,4) NULL,
+  ADD COLUMN IF NOT EXISTS so2  DECIMAL(10,4) NULL,
+  ADD COLUMN IF NOT EXISTS co   DECIMAL(10,4) NULL;
 
 CREATE INDEX IF NOT EXISTS idx_aq_area_time
   ON air_quality_readings(area_label, observed_at);
