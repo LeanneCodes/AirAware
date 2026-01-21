@@ -54,7 +54,7 @@ app.use('/api/auth', authRouter);
 // app.use('/api/user', authMiddleware, userRouter);
 app.use('/api/thresholds', authMiddleware, thresholdRouter);
 app.use('/api/location', authMiddleware, locationRouter);
-// app.use('/api/dashboard', authMiddleware, dashboardRouter);
+app.use('/api/dashboard', authMiddleware, dashboardRouter);
 
 /* API 404 (only for /api/*) */
 app.use('/api', (req, res) => {
