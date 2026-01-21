@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="./signup/signup.css">
+    <meta charset="UTF-8">
+    <title>Sign up</title>
+</head>
+<body>
+<script src="signup.js"></script>
+<img src="../assets/AirAwareLogo(white).png" alt="Company Logo" class="page-logo">
+
+<form action="/signup" method="post">
+
+    <h1 class="login-title">Create an account</h1>
+    <br>
+    <h2 class="subheading">Set up your AirAware+ account</h2>
+
+    <div>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="confirm-password">Confirm password:</label><br>
+        <input type="password" id="confirm-password" name="confirm_password" required>
+    </div>
+
+    <br>
+
+    <div>
+       <button type="button">
+  Create account
+</button>
+    </div>
+
+    <div class="signup-row">
+        <span>Already have an account?</span>
+        <button
+        type="button"
+     class="signup-btn"
+     onclick="window.location.href='/public/login/login.html'">
+        Log in
+        </button>
+    </div>
+
+</form>
+
+</body>
+</html>

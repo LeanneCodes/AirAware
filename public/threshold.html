@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Common Pollutants Threshold</title>
-    <link rel="stylesheet" href="../public/threshold/threshold.css">
+    <link rel="stylesheet" href="/threshold/threshold.css">
 </head>
 <body>
 
@@ -20,91 +20,78 @@
 
 <!-- Main content -->
 <main class="content">
+<form class="sensitivity-form">
 
-    <p class="question">
-        How sensitive are you to the following airborne pollutants?
+  <div class="sensitivity-group">
+
+    <p class="sensitivity-title">
+      Set your overall sensitivity level to comon airborne polutants
     </p>
 
-    <div class="inputs-grid">
+    <div class="quiz-options">
 
-        <div class="input-row">
-            <label>PM 2.5</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
-        <div class="input-row">
-            <label>PM 10</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
-        <div class="input-row">
-            <label>NO₂</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
-        <div class="input-row">
-            <label>SO₂</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
-        <div class="input-row">
-            <label>O₃</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
-        <div class="input-row">
-            <label>CO</label>
-            <select>
-                <option>I don’t know</option>
-                <option>Very sensitive</option>
-                <option>Sensitive</option>
-                <option>Moderately sensitive</option>
-                <option>Slightly sensitive</option>
-                <option>Not sensitive</option>
-            </select>
-        </div>
-
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="very-sensitive" required>
+    <div class="quiz-content">
+      <div class="quiz-title">Very sensitive</div>
+      <div class="quiz-desc">I notice symptoms quickly and want early warnings.</div>
     </div>
+  </label>
 
-    <button class="unknown-btn">
-        I don’t know my tolerance levels
-    </button>
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="sensitive">
+    <div class="quiz-content">
+      <div class="quiz-title">Sensitive</div>
+      <div class="quiz-desc">Pollution affects me more than average.</div>
+    </div>
+  </label>
 
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="moderate">
+    <div class="quiz-content">
+      <div class="quiz-title">Moderately sensitive</div>
+      <div class="quiz-desc">I want balanced alerts.</div>
+    </div>
+  </label>
+
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="slight">
+    <div class="quiz-content">
+      <div class="quiz-title">Slightly sensitive</div>
+      <div class="quiz-desc">I’m rarely affected, but still want occasional alerts.</div>
+    </div>
+  </label>
+
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="not-sensitive">
+    <div class="quiz-content">
+      <div class="quiz-title">Not sensitive</div>
+      <div class="quiz-desc">I only care about severe pollution.</div>
+    </div>
+  </label>
+
+  <label class="quiz-option">
+    <input type="radio" name="sensitivity" value="unknown">
+    <div class="quiz-content">
+      <div class="quiz-title">I don’t know</div>
+      <div class="quiz-desc">We’ll choose a safe default and you can adjust later.</div>
+    </div>
+  </label>
+
+</div>
+
+    <!-- Reassurance -->
+    <p class="reassurance">
+      You can change your sensitivity at any time.
+    </p>
+
+  </div>
+
+  <button type="submit" class="submit-btn">
+    Continue
+  </button>
+
+</form>
 </main>
 
 </body>

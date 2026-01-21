@@ -1,25 +1,28 @@
-/* Banner */
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, Helvetica, Arial, sans-serif;
+    background: #ffffff;
+    color: #000;
+}
+
+/* ================================
+   Banner
+   ================================ */
+
 .banner {
     height: 260px;
     background-image: url("../assets/web-bg.jpg");
     background-size: cover;
     background-position: center;
     position: relative;
+    width: 100vw;
 }
 
-/* Banner title */
-.banner-title {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: right;
-    color: #000;
-    line-height: 1.4;
-}
+/* ================================
+   Logo badge
+   ================================ */
 
-/* Logo badge */
 .logo-badge {
     width: 120px;
     height: 120px;
@@ -38,7 +41,10 @@
     width: 180px;
 }
 
-/* Main content */
+/* ================================
+   Main content
+   ================================ */
+
 .content {
     margin-top: 90px;
     padding: 40px 60px;
@@ -46,59 +52,141 @@
     text-align: center;
 }
 
-/* Question */
-.question {
-    font-size: 15px;
-    margin-bottom: 40px;
+/* ================================
+   Sensitivity section
+   ================================ */
+
+.sensitivity-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sensitivity-group {
+    max-width: 520px;
+    margin: 0 auto 40px auto;
+    text-align: left;
+}
+
+.sensitivity-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 28px;
+    text-align: center;
     color: #000;
 }
 
-/* Inputs grid */
-.inputs-grid {
-    max-width: 720px;
-    margin: 0 auto 40px auto;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    column-gap: 80px;
-    row-gap: 20px;
-}
+/* ================================
+   Quiz-style sensitivity options
+   ================================ */
 
-/* Input rows */
-.input-row {
+.quiz-options {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 14px;
 }
 
-.input-row label {
-    width: 70px;
-    font-size: 13px;
-    text-align: right;
+/* Hide native radio input */
+.quiz-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* Dropdowns */
-.input-row select {
-    width: 200px;
-    padding: 6px 8px;
-    border: 1px solid #333;
-    font-size: 13px;
-    background: #ffffff;
-}
-
-.input-row select:focus {
-    outline: none;
-    border-color: #0b5f85;
-}
-
-/* Bottom button */
-.unknown-btn {
-    padding: 8px 16px;
-    font-size: 12px;
-    border: 1px solid #333;
-    background: #ffffff;
+/* Clickable card */
+.quiz-option {
+    display: block;
     cursor: pointer;
 }
 
-.unknown-btn:hover {
-    background: #f0f0f0;
+/* Card surface */
+.quiz-content {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 8px 24px rgba(0, 0, 0, 0.06);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+/* Hover lift */
+.quiz-option:hover .quiz-content {
+    transform: translateY(-2px);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Selected state */
+.quiz-option input[type="radio"]:checked + .quiz-content {
+    background: linear-gradient(180deg, #f5fafc 0%, #eef6fb 100%);
+    box-shadow:
+        0 6px 20px rgba(11, 95, 133, 0.22);
+    transform: translateY(-1px);
+}
+
+/* Keyboard focus */
+.quiz-option input[type="radio"]:focus-visible + .quiz-content {
+    outline: 2px solid #0b5f85;
+    outline-offset: 3px;
+}
+
+/* Typography */
+.quiz-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    color: #000;
+}
+
+.quiz-desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #555;
+}
+
+/* ================================
+   Submit button
+   ================================ */
+
+.submit-btn {
+    margin-top: 40px;
+    padding: 12px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 999px;
+    border: none;
+    background: #0b5f85;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(11, 95, 133, 0.25);
+}
+
+.submit-btn:hover {
+    background: #094d6c;
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ================================
+   Responsive adjustments
+   ================================ */
+
+@media (max-width: 640px) {
+    .content {
+        padding: 32px 20px;
+    }
+
+    .sensitivity-group {
+        margin-bottom: 32px;
+    }
 }
