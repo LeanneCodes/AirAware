@@ -1,43 +1,111 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AirAware+</title>
+    <title>Common Pollutants Threshold</title>
     <link rel="stylesheet" href="threshold.css">
 </head>
 <body>
 
-    
-    <header class="top-bar">
-        <div class="top-left">
-            <img src="../assets/logo-clear-bg.png" alt="AirAware+ Logo">
+<!-- Top banner -->
+<div class="banner">
+    <div class="banner-title">
+    </div>
+</div>
+
+<!-- Logo badge -->
+<div class="logo-badge">
+    <img src="../assets/AirAwareLogo(white).png" alt="AirAware+">
+</div>
+
+<!-- Main content -->
+<main class="content">
+
+    <p class="question">
+        How sensitive are you to the following airborne pollutants?
+    </p>
+
+    <div class="inputs-grid">
+
+        <div class="input-row">
+            <label>PM 2.5</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
         </div>
 
-        <div class="top-right">
-            <a href="#">Homepage</a>
-            <span class="welcome">Welcome, User!</span>
-            <div class="user-icon"></div>
+        <div class="input-row">
+            <label>PM 10</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
         </div>
-    </header>
 
-    
-    <main class="container">
-        <div class="card">
-            <div class="card-logo">
-                <img src="../assets/logo-clear-bg.png" alt="AirAware+ Logo">
-            </div>
-
-            <p class="question">
-                What is your tolerance for these pollutants,<br>
-                if you know?
-            </p>
-
-            <div class="options">
-                <button>PM 2.5</button>
-                <button>NO2</button>
-                <button>I don't know</button>
-            </div>
+        <div class="input-row">
+            <label>NO₂</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
         </div>
-    </main>
+
+        <div class="input-row">
+            <label>SO₂</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label>O₃</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label>CO</label>
+            <select>
+                <option>I don’t know</option>
+                <option>Very sensitive</option>
+                <option>Sensitive</option>
+                <option>Moderately sensitive</option>
+                <option>Slightly sensitive</option>
+                <option>Not sensitive</option>
+            </select>
+        </div>
+
+    </div>
+
+    <button class="unknown-btn">
+        I don’t know my tolerance levels
+    </button>
+
+</main>
 
 </body>
 </html>

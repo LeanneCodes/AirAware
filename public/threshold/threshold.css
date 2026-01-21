@@ -1,111 +1,104 @@
-body {
-    min-height: 100vh;
+/* Banner */
+.banner {
+    height: 260px;
     background-image: url("../assets/web-bg.jpg");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+    position: relative;
 }
 
-
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 30px;
-}
-
-.top-left img {
-    height: 150px;
-}
-
-.top-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.top-right a {
-    text-decoration: none;
-    background: #1f4fa3;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.welcome {
-    background: #1f4fa3;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.user-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #1f4fa3;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-}
-
-
-.container {
-    min-height: calc(100vh - 90px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-.card {
-    width: 420px;
-    padding: 1rem;
-    background: #ffffff;
-    border-radius: 26px;
-    border: 2px solid #3b6eea;
-    text-align: center;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
-}
-
-
-.card-logo {
-    margin-bottom: 1rem;
-}
-
-.card-logo img {
-    height: 100px;
-}
-
-
-.question {
-    font-size: 1rem;
-    color: #222;
-    margin-bottom: 1.8rem;
+/* Banner title */
+.banner-title {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+    color: #000;
     line-height: 1.4;
 }
 
-
-.options {
+/* Logo badge */
+.logo-badge {
+    width: 120px;
+    height: 120px;
+    background: #0b5f85;
+    border-radius: 50%;
+    position: absolute;
+    top: 200px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    justify-content: center;
 }
 
-.options button {
-    padding: 0.8rem;
-    border-radius: 999px;
-    border: 1.5px solid #3b6eea;
+.logo-badge img {
+    width: 180px;
+}
+
+/* Main content */
+.content {
+    margin-top: 90px;
+    padding: 40px 60px;
     background: #ffffff;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    text-align: center;
 }
 
-.options button:hover {
-    background: #f2f6ff;
+/* Question */
+.question {
+    font-size: 15px;
+    margin-bottom: 40px;
+    color: #000;
+}
+
+/* Inputs grid */
+.inputs-grid {
+    max-width: 720px;
+    margin: 0 auto 40px auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 80px;
+    row-gap: 20px;
+}
+
+/* Input rows */
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.input-row label {
+    width: 70px;
+    font-size: 13px;
+    text-align: right;
+}
+
+/* Dropdowns */
+.input-row select {
+    width: 200px;
+    padding: 6px 8px;
+    border: 1px solid #333;
+    font-size: 13px;
+    background: #ffffff;
+}
+
+.input-row select:focus {
+    outline: none;
+    border-color: #0b5f85;
+}
+
+/* Bottom button */
+.unknown-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    border: 1px solid #333;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.unknown-btn:hover {
+    background: #f0f0f0;
 }
