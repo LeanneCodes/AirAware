@@ -30,23 +30,23 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 /* Frontend routes (Views) */
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'homepage', 'homepage.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard', 'dashboard.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
 app.get('/threshold', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'threshold', 'threshold.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'threshold.html'));
 });
 
 app.get('/location', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'location', 'location.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'location.html'));
 });
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'login', 'login.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
 /* API routes */
@@ -63,7 +63,7 @@ app.use('/api', (req, res) => {
 
 /* Frontend fallback (must be LAST) */
 app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'homepage', 'homepage.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 module.exports = app;
