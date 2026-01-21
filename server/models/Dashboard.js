@@ -138,29 +138,30 @@ class Dashboard {
   }
 
   static async getTrend(areaLabel, limit = 24) {
-    const { rows } = await db.query(
-      `SELECT observed_at, aqi, pm25, no2, o3, so2, pm10, co
+  const { rows } = await db.query(
+    `SELECT observed_at, aqi, pm25, pm10, no2, o3, so2, co
+     FROM (
+       SELECT observed_at, aqi, pm25, pm10, no2, o3, so2, co
        FROM air_quality_readings
        WHERE area_label = $1
        ORDER BY observed_at DESC
-       LIMIT $2;`,
-      [areaLabel, limit]
-    );
+       LIMIT $2
+     ) t
+     ORDER BY observed_at ASC;`,
+    [areaLabel, limit]
+  );
 
-    // return chronological order for graphing
-    return rows
-      .map(r => ({
-        observed_at: r.observed_at,
-        aqi: r.aqi,
-        pm25: r.pm25,
-        no2: r.no2,
-        o3: r.o3,
-        so2: r.so2,
-        pm10: r.pm10,
-        co: r.co,
-      }))
-      .reverse();
-  }
+  return rows.map(r => ({
+    observed_at: r.observed_at,
+    aqi: r.aqi,
+    pm25: r.pm25,
+    pm10: r.pm10,
+    no2: r.no2,
+    o3: r.o3,
+    so2: r.so2,
+    co: r.co,
+  }));
+}
 
   static async getRecentAlerts(userId, limit = 10) {
     const { rows } = await db.query(
