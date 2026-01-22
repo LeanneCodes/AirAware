@@ -1,4 +1,4 @@
-/* ---------- Base reset ---------- */
+
 * {
     margin: 0;
     padding: 0;
@@ -10,7 +10,7 @@ html, body {
     height: 100%;
 }
 
-/* ---------- Split background: right panel image ---------- */
+
 body {
     min-height: 100vh;
     display: flex;
@@ -18,7 +18,7 @@ body {
     position: relative;
 }
 
-/* ---------- Left panel (the form) ---------- */
+
 form {
     width: 42%;
     min-width: 360px;
@@ -28,30 +28,30 @@ form {
 
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* top-ish like screenshot */
+    justify-content: flex-start; 
     gap: 14px;
 }
 
-/* ---------- Right panel logo (big centered) ---------- */
+
 .page-logo {
     position: absolute;
-    left: 72%;                 /* sits in right panel */
+    left: 72%;                 
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;              /* big logo like screenshot */
+    width: 400px;              
     max-width: 40vw;
     height: auto;
     filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
     pointer-events: none;
 }
 
-/* ---------- Form logo inside the panel (top-left small) ---------- */
+
 .form-logo {
     margin-bottom: 0px;
 }
 
 .form-logo img {
-    height: 100px;              /* small logo */
+    height: 100px;              
     width: auto;
 }
 .login-title {
@@ -61,26 +61,26 @@ form {
     margin-bottom: 28px;
 }
 .subheading {
-    margin-top: -18px;     /* pull closer to "Login" */
-    margin-bottom: 26px;   /* space before first input */
+    margin-top: -18px;     
+    margin-bottom: 26px;   
 
     font-size: 13px;
     color: #6a6a6a;
     font-weight: 400;
 }
 
-/* ---------- Labels ---------- */
+
 label {
     font-size: 12px;
     color: #6a6a6a;
 }
 
-/* Remove the <br> spacing effect a bit (since your HTML has <br>) */
+
 br {
     display: none;
 }
 
-/* ---------- Inputs: thin underline style ---------- */
+
 input[type="email"],
 input[type="password"] {
     width: 100%;
@@ -97,7 +97,6 @@ input[type="password"]:focus {
     border-bottom-color: #0b5f85;
 }
 
-/* ---------- Submit button: long rounded blue ---------- */
 button {
     margin-top: 18px;
     width: 100%;
@@ -131,7 +130,6 @@ button:active {
     color: #555;
 }
 
-/* Sign up row */
 .signup-row {
     margin-top: 32px;
     display: flex;
@@ -139,15 +137,13 @@ button:active {
     justify-content: space-between;
 }
 
-/* Text */
 .signup-row span {
     font-size: 11px;
     color: #666;
 }
 
-/* Smaller sign-up button (right side) */
 .signup-btn {
-    height: 26px;              /* smaller */
+    height: 26px;              
     padding: 0 12px;
     border-radius: 6px;
 
@@ -163,7 +159,7 @@ button:active {
 .signup-btn:hover {
     background: #094c6b;
 }
-/* ---------- Responsive: stack for mobile ---------- */
+/* ---------- Responsive: stack for mobile??? ---------- */
 @media (max-width: 900px) {
     body {
         background-position: center;

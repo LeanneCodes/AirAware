@@ -74,9 +74,7 @@ body {
     width: 100vw;
 }
 
-/* ================================
-   Logo badge
-   ================================ */
+
 
 .logo-badge {
     width: 120px;
@@ -96,9 +94,7 @@ body {
     width: 180px;
 }
 
-/* ================================
-   Main content
-   ================================ */
+
 
 .content {
     margin-top: 90px;
@@ -107,9 +103,7 @@ body {
     text-align: center;
 }
 
-/* ================================
-   Sensitivity section
-   ================================ */
+
 
 .sensitivity-form {
     display: flex;
@@ -132,9 +126,7 @@ body {
     color: #000;
 }
 
-/* ================================
-   Quiz-style sensitivity options
-   ================================ */
+
 
 .quiz-options {
     display: flex;
@@ -206,9 +198,7 @@ body {
     color: #555;
 }
 
-/* ================================
-   Submit button
-   ================================ */
+
 
 .submit-btn {
     margin-top: 40px;
