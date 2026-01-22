@@ -6,26 +6,64 @@ body {
     color: #000;
 }
 
+:root{
+  --nav: #0c3a63;
+  --nav-h: 110px;
+}
+
+*{ box-sizing: border-box; }
+
 .nav{
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 150px;
+  height: var(--nav-h);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   padding: 18px 28px;
   z-index: 50;
+
   background: transparent;
 }
 
-.navleft{ display: flex; align-items: center; text-decoration: none; }
-.navright{ display: flex; align-items: center; gap: 18px; }
+.navleft{
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
 
-.brandlogo {
-  max-height: 60px;
+.navright{
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.brandlogo{
+  height: 220px;
   width: auto;
   display: block;
 }
+
+.chip{
+  display: inline-block;
+  background: var(--nav);
+  color: #fff;
+  font-weight: 800;
+  font-size: 28px;
+  padding: 12px 18px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.chip:hover{ opacity: 0.92; }
+.chip:active{ transform: translateY(1px); }
+
+
+/* ================================
+   Banner
+   ================================ */
 
 .banner {
     height: 260px;

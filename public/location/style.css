@@ -72,7 +72,6 @@ html, body {
   padding: 320px 20px 90px;
 }
 
-
 .card {
   width: min(820px, 92vw);     
   background: #fff;
@@ -82,14 +81,12 @@ html, body {
   text-align: center;
 }
 
-
 .cardlogo {
   width: 190px;
   height: auto;
   display: block;
   margin: 0 auto 10px;
 }
-
 
 .title {
   margin: 0 0 8px;
@@ -105,7 +102,6 @@ html, body {
   line-height: 1.45;
   color: rgba(17,24,39,.72);
 }
-
 
 .form {
   width: min(660px, 100%); 
@@ -146,7 +142,6 @@ html, body {
   cursor: not-allowed;
 }
 
-
 .divider {
   text-align: center;
   font-weight: 700;
@@ -155,7 +150,6 @@ html, body {
   margin: 4px 0;
 }
 
-
 .hint {
   margin: -4px 0 2px;
   font-size: 13px;
@@ -163,7 +157,6 @@ html, body {
   line-height: 1.35;
   text-align: center;
 }
-
 
 .btnPrimary {
   width: 100%;
@@ -191,7 +184,6 @@ html, body {
   padding: 8px 0 0;
   text-decoration: underline;
 }
-
 
 @media (max-width: 820px) {
   .brandlogo { height: 72px; }
