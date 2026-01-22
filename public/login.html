@@ -1,44 +1,120 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <link rel="stylesheet" href="/login/login.css">
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
-<img src="../assets/AirAwareLogo(white).png" alt="Company Logo" class="page-logo">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AirAware+ | Create account</title>
+    <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon" />
 
-    <form action="/login" method="post">
-        <h1 class="login-title">Login</h1>
-        <br>
-        <h2 class="subheading">Enter your account details</h2>
-        <div>
-            <label for="email">Email:</label><br>
-            <input type="email" id="email" name="username" required>
-        </div>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
 
-        <br>
+    <style>
+      .bg-pane {
+        background-image: url("/assets/web-bg.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
 
-        <div>
-            <label for="password">Password:</label><br>
-            <input type="password" id="password" name="password" required>
-        </div>
+      /* Inputs: bottom line only */
+      .form-underline {
+        border: 0;
+        border-bottom: 1px solid var(--bs-border-color);
+        border-radius: 0;
+        padding-left: 0;
+        padding-right: 0;
+        background-color: transparent;
+      }
 
-        <br>
+      .form-underline:focus {
+        box-shadow: none;
+        border-bottom-color: var(--bs-primary);
+      }
 
-        <div>
-            <button type="submit">Login</button>
-        </div>
-    <div class="signup-row">
-    <span>Don’t have an account?</span>
-    <button
-    type="button"
-    class="signup-btn"
-    onclick="window.location.href='/signup.html'">
-    Sign up
-</button>
-    </div>
-    </form>
+      /* Hide image pane on mobile */
+      @media (max-width: 767.98px) {
+        .bg-pane {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
 
-</body>
+  <body class="bg-white">
+    <main class="min-vh-100">
+      <div class="row min-vh-100 g-0">
+        <!-- FORM -->
+        <section
+          class="col-12 col-md-6 col-lg-3 d-flex align-items-center"
+          aria-label="Create account form"
+        >
+          <div class="w-100 px-4 px-lg-5 py-5">
+            <!-- Logo (mobile only) -->
+            <div class="d-md-none text-center mb-4">
+              <img
+                src="/assets/airaware-logo-no-whitespace.png"
+                alt="AirAware+"
+                class="img-fluid"
+                style="max-width: 150px; margin-bottom: 2rem;"
+              />
+            </div>
+
+            <h1 class="h3 fw-semibold mb-2">Login</h1>
+            <p class="text-body-secondary mb-4">Enter your account details</p>
+
+            <form action="/auth/register" method="post" novalidate>
+              <div class="mb-3">
+                <label for="email" class="form-label small">Email:</label>
+                <input
+                  type="email"
+                  class="form-control form-control-lg form-underline"
+                  id="email"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label small">Password:</label>
+                <input
+                  type="password"
+                  class="form-control form-control-lg form-underline"
+                  id="password"
+                  required
+                />
+              </div>
+
+              <button type="submit" class="btn btn-lg w-100" style="background-color: #185f85; color: white;">
+                Login
+              </button>
+
+              <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="text-body-secondary small">
+                  Don’t have an account?
+                </span>
+                <a href="/signup" class="btn btn-sm px-4" style="background-color: #185f85; color: white;">
+                  Sign up
+                </a>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- IMAGE -->
+        <section class="col-md-6 col-lg-9 bg-pane d-none d-md-flex">
+          <div class="d-flex w-100 h-100 align-items-center justify-content-center">
+            <img
+              src="/assets/AirAwareLogo(white).png"
+              alt="AirAware+"
+              class="img-fluid"
+              style="max-width: 55%; height: auto;"
+            />
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
 </html>
