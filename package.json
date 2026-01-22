@@ -13,7 +13,7 @@
     "testw": "jest --watchAll --detectOpenHandles --runInBand --verbose",
     "unitTests": "jest --testPathPattern=/unit/ --watchAll --verbose",
     "integrationTests": "jest --testPathPattern=/integration/ --watchAll --detectOpenHandles --runInBand --verbose",
-    "coverage": "jest --coverage --testPathPattern=/unit/"
+    "coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
