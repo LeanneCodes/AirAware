@@ -14,6 +14,8 @@
 
     <style>
       .bg-pane {
+        position: relative;
+        overflow: hidden;
         background-image: url("/assets/web-bg.jpg");
         background-size: cover;
         background-position: center;
@@ -33,6 +35,26 @@
       .form-underline:focus {
         box-shadow: none;
         border-bottom-color: var(--bs-primary);
+      }
+
+      .bg-pane::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(24, 95, 133, 0.65) 0%,
+          rgba(24, 95, 133, 0.35) 40%,
+          rgba(0, 0, 0, 0.25) 100%
+        );
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* anything inside bg-pane should sit above the overlay */
+      .bg-pane > * {
+        position: relative;
+        z-index: 1;
       }
 
       /* Hide image pane on mobile */
