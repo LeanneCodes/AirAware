@@ -1,210 +1,294 @@
-# AirAware MVC Project Structure Guide
+#  AirAware
 
-This document explains the purpose of each folder and key file in the AirAware project. The project follows a **Node.js + Express MVC architecture**, with a clear separation between frontend (public) and backend (server) responsibilities.
-
----
-
-## Root Files
-
-### `index.js`
-
-The main entry point of the application. It starts the Express server and listens for incoming requests on a specified port.
-
-### `app.js`
-
-Initialises and configures the Express application. This includes registering middleware, serving static files from the public folder, and wiring routes to controllers.
-
-### `.env`
-
-Stores environment variables such as database credentials, JWT secrets, and API keys. This file should never be committed to version control.
-
-### `.gitignore`
-
-Specifies which files and folders should be excluded from Git (for example `node_modules` and `.env`).
-
-### `README.md`
-
-High-level overview of the project, including setup instructions and a summary of the architecture.
+AirAware is a data-driven web application designed to help users understand how air pollution impacts respiratory health, with a particular focus on asthma and allergies. The platform aims to raise awareness, provide insights through data visualisation, and support informed decision-making for individuals sensitive to air quality.
 
 ---
 
-## `public/` – View Layer (Frontend)
+## Project Description
 
-Contains all client-facing files. This represents the **View** in MVC, along with client-side JavaScript for user interaction.
+Air pollution is a major environmental risk to health, especially for people with asthma and allergies. **AirAware** aggregates and analyses air quality and health-related data to highlight trends, risks, and insights in a clear and accessible way.  
 
-### `public/index.html`
-
-Login and registration page.
-
-### `public/dashboard.html`
-
-Displays personalised air quality information and risk insights for the user.
-
-### `public/threshold.html`
-
-Allows users to set and update their pollutant tolerance thresholds.
-
-### `public/location.html`
-
-Allows users to select or update their location preferences.
-
-### `public/css/`
-
-Contains global styling for the application.
-
-* `style.css` – Main stylesheet used across all pages.
-
-### `public/js/`
-
-Client-side JavaScript files. Each file corresponds to a specific HTML page and handles DOM interaction and API calls.
-
-* `index.js` – Handles login and registration logic.
-* `dashboard.js` – Fetches and displays dashboard data.
-* `threshold.js` – Handles threshold form submission.
-* `location.js` – Handles location updates.
-
-### `public/assets/`
-
-Static assets such as images and icons used in the UI.
-
-### `public/__tests__/`
-
-Frontend tests that validate client-side behaviour and logic for each page.
+The project was built as part of a data-focused MVP, combining backend development, data analysis, and visualisation tools.
 
 ---
 
-## `server/` – Controller & Model Layer (Backend)
+## Installation & Usage
 
-Contains all backend logic, including controllers, models, routes, database access, and middleware.
+### Installation
 
-### `server/controllers/`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/airaware.git
+   ```
+2. Navigate into the project directory:
+   ```bash 
+   cd airaware
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Create a ```.env ``` file and add required environment variables:
+   ``` bash
+   DATABASE_URL=your_database_url
+   JWT_SECRET=your_jwt_secret
+   ```
 
-Controllers handle incoming HTTP requests, coordinate models, and return responses.
-
-* `authController.js` – Handles user registration and login.
-* `userController.js` – Handles user profile operations.
-* `thresholdController.js` – Handles saving and retrieving threshold data.
-* `dashboardController.js` – Aggregates data from multiple sources for the dashboard.
-
-### `server/models/`
-
-Models represent the application’s data structures and interact directly with the database.
-
-* `User.js` – User account and authentication data.
-* `Threshold.js` – Pollution tolerance data per user.
-* `Location.js` – User location data.
-
-### `server/routers/`
-
-Defines API endpoints and maps them to controller functions. Routers contain no business logic.
-
-* `authRoutes.js`
-* `userRoutes.js`
-* `thresholdRoutes.js`
-* `dashboardRoutes.js`
-
-### `server/db/`
-
-Responsible for database configuration and setup.
-
-* `connect.js` – Establishes a connection to the PostgreSQL database.
-* `setup.js` – Handles database initialisation and setup tasks.
-* `schema.sql` – Defines the database schema (tables, relationships, constraints).
-
-### `server/middleware/`
-
-Reusable middleware functions applied to routes.
-
-* `authMiddleware.js` – Verifies JWTs and protects authenticated routes.
-
-### `server/__tests__/`
-
-Backend tests that validate controllers, routes, and database interactions.
+### Usage
+1. Start the development server:
+   ``` bash 
+   npm run dev
+   ```
+2. Access the API locally via:
+   ``` arduino
+   http://localhost:3000
+   ```
+3. Use Postman or a frontend client to interact with the available endpoints. 
 
 ---
 
-## Architecture Summary
+### Example API Request
 
-* **Views** live in the `public` folder and are responsible for presentation.
-* **Controllers** live in `server/controllers` and handle request logic.
-* **Models** live in `server/models` and manage data persistence.
-* **Routes** connect HTTP endpoints to controllers.
-* **Database access** is encapsulated in the `server/db` folder.
+**Register a new user**
 
-This structure ensures clear separation of concerns, improved maintainability, and a design that is easy to explain and assess.
-
----
-
-## Project Tree Structure
-
+   ``` http
+POST /api/auth/register HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
 ```
-AirAware
-├─ README.md
-├─ docs
-│  ├─ locationLogic.md
-│  └─ userJourney.md
-├─ package-lock.json
-├─ package.json
-├─ public
-│  ├─ __tests__
-│  │  ├─ dashboard.test.js
-│  │  ├─ location.test.js
-│  │  ├─ login.test.js
-│  │  └─ threshold.test.js
-│  ├─ assets
-│  │  ├─ logo-clear-bg.png
-│  │  └─ logo-white-bg.png
-│  ├─ css
-│  │  └─ style.css
-│  ├─ dashboard.html
-│  ├─ index.html
-│  ├─ js
-│  │  ├─ dashboard.js
-│  │  ├─ index.js
-│  │  ├─ location.js
-│  │  └─ threshold.js
-│  ├─ location.html
-│  └─ threshold.html
-└─ server
-   ├─ __tests__
-   │  ├─ integration
-   │  │  ├─ config.js
-   │  │  └─ reset.all.sql
-   │  └─ unit
-   │     ├─ controllers
-   │     │  ├─ authController.test.js
-   │     │  ├─ dashboardController.test.js
-   │     │  ├─ thresholdController.test.js
-   │     │  └─ userController.test.js
-   │     ├─ models
-   │     │  ├─ Auth.test.js
-   │     │  ├─ Location.test.js
-   │     │  ├─ Threshold.test.js
-   │     │  └─ User.test.js
-   │     └─ services
-   │        ├─ airQualityService.test.js
-   │        └─ locationService.test.js
-   ├─ app.js
-   ├─ controllers
-   │  ├─ authController.js
-   │  ├─ dashboardController.js
-   │  ├─ locationController.js
-   │  ├─ thresholdController.js
-   │  └─ userController.js
-   ├─ db
-   │  ├─ connect.js
-   │  ├─ schema.sql
-   │  └─ setup.js
-   ├─ index.js
-   ├─ middleware
-   │  └─ authMiddleware.js
-   ├─ models
-   │  ├─ Auth.js
-   │  ├─ Location.js
-   │  ├─ Threshold.js
-   │  └─ User.js
-   └─ services
-      ├─ airQualityService.js
-      └─ locationService.js
-
+``` json 
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "condition": "asthma",
+  "sensitivity": "high"
+}
 ```
+### Scripts 
+``` bash
+npm run dev       # Start development server 
+npm start         # Start production server
+npm test          # Run unit and integration tests
+```
+## Development vs Production 
+### Development
+- Uses ``` npm run dev ```
+- Includes detailed error logging
+- Intended for local development and testing
+- Environment variables loaded from .env
+### Production
+- Uses ``` npm start ```
+- Optimised for performance and stability
+- Environment variables managed by the hosting platform
+- Debug logging disabled
+
+Before deploying to production, ensure:
+- Environment variables are securely configured
+- Database migrations are up to date
+- All tests pass successfully
+---
+## Testing
+
+This project uses **Jest** for unit and integration testing.
+
+### Running Tests
+
+Run all tests with:
+```bash
+npm test
+
+- Example test 
+``` js 
+describe("Health check endpoint", () => {
+  it("should return status 200", async () => {
+    const res = await request(app).get("/api/health");
+    expect(res.statusCode).toBe(200);
+  });
+});
+```
+The tests cover 
+- User authentication logic
+- Model functions
+- Protected routes
+- Error handling
+
+### Authentication Flow
+AirAware uses JWT-based authentication.
+### Authentication Steps
+1. User registers with email and password.
+2. Password is hashed using ``` bcrypt```.
+3. A JWT is generated and returned to the user.
+4. The JWT is stored client-side (e.g. localStorage).
+5. Protected routes require a valid JWT in the ``` Authorisation``` header.
+
+If the token is missing, invalid, or expired, access is denied.
+
+## Deployment 
+The application can be deployed to platforms such as **Render**, **Railway**, or **Heroku**.
+### General Deployment Steps
+1. Push the project to GitHub.
+2. Create a new service on your chosen platform.
+3. Set the following environment variables:
+``` nginx 
+DATABASE_URL
+JWT_SECRET
+```
+4. Ensure the build and start commands are set correctly:
+``` bash 
+npm install
+npm start
+```
+### Notes
+- Use a managed PostgreSQL database.
+- Do not commit the ```.env``` file.
+- Run tests before deploying to production.
+---
+## API endpoints 
+| Method | Endpoint             | Description                | Auth Required |
+|--------|----------------------|----------------------------|---------------|
+| POST   | `/api/auth/register` | Register a new user        | ❌ No         |
+| POST   | `/api/auth/login`    | Log in an existing user    | ❌ No         |
+| GET    | `/api/users/profile` | Get logged-in user profile | ✅ Yes        |
+| PUT    | `/api/users/profile` | Update user information    | ✅ Yes        |
+| GET    | `/api/health`        | API health check           | ❌ No         |
+
+---
+
+## Problem Statement & USP
+
+### Problem Statement
+
+Air pollution is a significant environmental and public health issue, particularly for individuals with respiratory conditions such as asthma and allergies. While air quality data is widely available, it is often fragmented, difficult to interpret, and not directly linked to health impacts. This makes it challenging for affected individuals and stakeholders to understand risks and make informed decisions.
+
+### Unique Selling Point (USP)
+
+**AirAware** bridges the gap between raw air quality data and real-world health impacts by:
+- Combining environmental and health-related datasets
+- Presenting insights through clear, interactive visualisations
+- Focusing specifically on asthma and allergy-related sensitivities
+- Providing a foundation for personalised, data-driven health awareness
+
+---
+
+## Data Analysis & Visualisation
+
+Data analysis is a core component of the AirAware project, enabling the transformation of raw datasets into meaningful insights.
+
+### Databricks
+
+- Used for data cleaning, preparation, and exploratory analysis
+- Handled missing values and inconsistent records
+- Performed aggregations and trend analysis on air pollution and health data
+- Enabled scalable data processing using Python notebooks
+
+### Tableau
+
+- Used to create interactive dashboards and visualisations
+- Highlighted trends in air pollution levels over time
+- Visualised relationships between pollutants and respiratory health outcomes
+- Allowed filtering by location, pollutant type, and time period
+
+These tools together support evidence-based insights and enhance the accessibility of complex datasets.
+
+---
+
+## System Architecture
+The AirAware application is built using a modular, layered architecture that separates backend services, data processing, and visualisation. This ensures scalability, maintainability, and clear responsibility across components.
+
+### Architecture Diagram (Logical View)
+
+```text
+┌───────────────────────┐
+│   Client / Consumer   │
+│ (Postman / Frontend)  │
+└───────────┬───────────┘
+            │ HTTP Requests
+            ▼
+┌───────────────────────┐
+│  Node.js / Express API│
+│  - Auth (JWT)         │
+│  - Business Logic     │
+└───────────┬───────────┘
+            │ SQL Queries
+            ▼
+┌───────────────────────┐
+│     PostgreSQL DB     │
+│  - Users              │
+│  - App Data           │
+└───────────┬───────────┘
+            │ Data Export
+            ▼
+┌───────────────────────┐
+│     Databricks        │
+│  - Data Cleaning      │
+│  - Analysis (Python)  │
+└───────────┬───────────┘
+            │ Processed Data
+            ▼
+┌───────────────────────┐
+│       Tableau         │
+│  - Dashboards         │
+│  - Visual Insights    │
+└───────────────────────┘
+```
+
+### Architecture Overview
+
+- **Client / API Consumer**
+  - Postman or frontend application
+- **Backend**
+  - Node.js & Express.js REST API
+  - JWT-based authentication
+- **Database**
+  - PostgreSQL for persistent user and application data
+- **Data Layer**
+  - Data processing and analysis in Databricks
+- **Visualisation Layer**
+  - Tableau dashboards for insights and reporting
+
+### Diagram
+
+---
+
+## Results & Insights
+
+Analysis of air quality and health-related datasets revealed several key insights.
+
+### Key Findings
+
+- Certain pollutants (such as particulate matter) consistently showed higher concentrations in urban areas.
+- Periods of increased air pollution aligned with higher reported respiratory health risks.
+- Seasonal trends indicated worse air quality during specific months.
+- Geographic variation highlighted regions with consistently poorer air quality.
+
+### Dashboard Insights
+
+Tableau dashboards enabled:
+
+- Comparison of pollutant levels over time
+- Filtering by location and pollutant type
+- Identification of high-risk periods for asthma and allergy sufferers
+
+These insights demonstrate the value of combining environmental and health data to support awareness and informed decision-making.
+
+---
+
+## Data Quality & Limitations
+
+While the project provides valuable insights, several data limitations were identified.
+
+### Data Quality Considerations
+
+- Missing values were present in some datasets and required cleaning.
+- Data sources varied in granularity and update frequency.
+- Health data was aggregated and did not represent individual diagnoses.
+
+### Limitations
+
+- No real-time data integration in the MVP.
+- Limited geographic coverage depending on data availability.
+- Correlation does not imply causation between pollution levels and health outcomes.
+
+These limitations were considered during analysis and provide direction for future improvements.
+
+
