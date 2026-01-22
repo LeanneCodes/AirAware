@@ -1,86 +1,64 @@
-export function initUserProfilePage(doc = document, deps = {}) {
-  const storage = deps.storage ?? window.localStorage;
-  const storageKey = deps.storageKey ?? "airaware_profile";
-
-  const form = doc.querySelector(".formGrid");
-  const firstName = doc.querySelector("#firstName");
-  const lastName = doc.querySelector("#lastName");
-  const dob = doc.querySelector("#dob");
-  const sexAtBirth = doc.querySelector("#sexAtBirth");
-  const gender = doc.querySelector("#gender");
-  const nationality = doc.querySelector("#nationality");
-
-  const errorEl = doc.querySelector("#profileError"); 
-
-  function setError(msg) {
-    if (!errorEl) return;
-    errorEl.textContent = msg;
-    errorEl.style.display = msg ? "block" : "none";
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/login";
+    return;
   }
 
-  function getProfile() {
-    return {
-      firstName: (firstName?.value ?? "").trim(),
-      lastName: (lastName?.value ?? "").trim(),
-      dob: (dob?.value ?? "").trim(),
-      sexAtBirth: (sexAtBirth?.value ?? "").trim(),
-      gender: (gender?.value ?? "").trim(),
-      nationality: (nationality?.value ?? "").trim(),
+  const form = document.querySelector(".formGrid");
+
+  const sexAtBirth = document.getElementById("sexAtBirth");
+  const dob = document.getElementById("dob");
+  const gender = document.getElementById("gender");
+  const nationality = document.getElementById("nationality");
+
+  async function loadProfile() {
+    const res = await fetch("/api/user/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    if (!res.ok) return;
+
+    const u = data.user;
+    if (sexAtBirth) sexAtBirth.value = u.condition_type || "";
+    if (gender) gender.value = u.sensitivity_level || "";
+    if (dob && u.accepted_disclaimer_at) {
+      dob.value = new Date(u.accepted_disclaimer_at).toISOString().split("T")[0];
+    }
+    if (nationality) nationality.value = u.analytics_opt_in ? "yes" : "no";
+  }
+
+  async function saveProfile(e) {
+    e.preventDefault();
+
+    const payload = {
+      condition_type: sexAtBirth?.value?.toLowerCase() || undefined,
+      sensitivity_level: gender?.value?.toLowerCase() || undefined,
+      analytics_opt_in: nationality?.value?.toLowerCase() === "yes",
+      accepted_disclaimer_at: dob?.value ? new Date(dob.value).toISOString() : null,
     };
-  }
 
-  function validate(profile) {
-    if (!profile.firstName && !profile.lastName) {
-      setError("Please enter at least your first name or last name.");
-      return false;
+    const res = await fetch("/api/user/me", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "Failed to save profile");
+      return;
     }
-    setError("");
-    return true;
+
+    alert("Profile saved successfully");
   }
 
-  function loadProfile() {
-    try {
-      const raw = storage.getItem(storageKey);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-
-      if (firstName) firstName.value = data.firstName ?? "";
-      if (lastName) lastName.value = data.lastName ?? "";
-      if (dob) dob.value = data.dob ?? "";
-      if (sexAtBirth) sexAtBirth.value = data.sexAtBirth ?? "";
-      if (gender) gender.value = data.gender ?? "";
-      if (nationality) nationality.value = data.nationality ?? "";
-
-      return data;
-    } catch {
-      return null;
-    }
-  }
-
-  function saveProfile(profile) {
-    storage.setItem(storageKey, JSON.stringify(profile));
-    return true;
-  }
-
-  function onSubmit(e) {
-    e?.preventDefault?.();
-
-    const profile = getProfile();
-    if (!validate(profile)) return false;
-
-    saveProfile(profile);
-    return true;
-  }
-
-  form?.addEventListener("submit", onSubmit);
-
+  form.addEventListener("submit", saveProfile);
   loadProfile();
-
-  return {
-    getProfile,
-    validate,
-    loadProfile,
-    saveProfile,
-    onSubmit,
-  };
-}
+});

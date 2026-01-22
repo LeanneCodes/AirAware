@@ -147,8 +147,7 @@
    
     return series;
   }
-
- =
+  
   async function fetchDashboard(city) {
     
     const url = `/api/dashboard?label=${encodeURIComponent(city)}`;

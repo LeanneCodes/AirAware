@@ -1,102 +1,136 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const cityInput = document.querySelector("#cityInput");
-  const postInput = document.querySelector("#postcodeInput");
   const form = document.querySelector("#locationForm");
+  const cityInput = document.querySelector("#cityInput");
+  const postcodeInput = document.querySelector("#postcodeInput");
   const clearBtn = document.querySelector("#clearBtn");
   const successEl = document.querySelector("#saveSuccess");
 
+  const API_BASE = "/api/location";
 
-  const storageKey = "airaware_location";
-
-  if (!cityInput || !postInput || !form || !clearBtn) {
-    console.warn("Location page: missing form elements");
-    return;
+  function showSuccess(msg) {
+    if (!successEl) return;
+    successEl.textContent = msg;
+    successEl.style.display = "block";
   }
 
-  const getCity = () => cityInput.value.trim();
-  const getPostcode = () => postInput.value.trim();
+  function hideSuccess() {
+    if (!successEl) return;
+    successEl.style.display = "none";
+  }
 
- 
   function syncDisableState() {
-    const city = getCity();
-    const post = getPostcode();
+    const city = cityInput.value.trim();
+    const post = postcodeInput.value.trim();
 
     if (city && !post) {
-      postInput.disabled = true;
+      postcodeInput.disabled = true;
       cityInput.disabled = false;
-      return;
-    }
-
-    if (post && !city) {
+    } else if (post && !city) {
       cityInput.disabled = true;
-      postInput.disabled = false;
-      return;
+      postcodeInput.disabled = false;
+    } else {
+      cityInput.disabled = false;
+      postcodeInput.disabled = false;
     }
-
-    cityInput.disabled = false;
-    postInput.disabled = false;
   }
 
-
-  function validate() {
-    const city = getCity();
-    const post = getPostcode();
+  function getPayload() {
+    const city = cityInput.value.trim();
+    const post = postcodeInput.value.trim();
 
     if (!city && !post) {
-      alert("Please enter either a city or a postcode.");
-      return null;
+      return { error: "Please enter either a city or a postcode." };
     }
-
     if (city && post) {
-      alert("Please use only one: city OR postcode.");
-      return null;
+      return { error: "Please use only one: city OR postcode." };
     }
-
-    return city
-      ? { type: "city", value: city }
-      : { type: "postcode", value: post };
+    return city ? { city } : { postcode: post };
   }
 
- 
-  function onInput() {
-    syncDisableState();
+  async function apiFetch(url, options) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      credentials: "include", 
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data.error || data.message || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return data;
   }
 
-  function onSubmit(e) {
-    e.preventDefault();
+  
+  async function saveLocation() {
+    const payload = getPayload();
+    if (payload.error) throw new Error(payload.error);
 
-    const payload = validate();
-    if (!payload) return;
-
-    localStorage.setItem(storageKey, JSON.stringify(payload));
-    syncDisableState();
-    if (successEl) {
-    successEl.style.display = "block";
-    successEl.textContent = "Location saved successfully.";
+    try {
+      await apiFetch(API_BASE, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      showSuccess("Location saved successfully.");
+    } catch (err) {
+  
+      if (String(err.message).toLowerCase().includes("already") || String(err.message).includes("POST /location first")) {
+        await apiFetch(API_BASE, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+        showSuccess("Location updated successfully.");
+      } else {
+        throw err;
+      }
+    }
   }
-  }
 
-  function onClear() {
+  async function clearLocation() {
     cityInput.value = "";
-    postInput.value = "";
-    localStorage.removeItem(storageKey);
+    postcodeInput.value = "";
     syncDisableState();
+
+    
+    await apiFetch(API_BASE, { method: "DELETE" });
+    showSuccess("Location successfully cleared.");
   }
 
-  cityInput.addEventListener("input", onInput);
-  postInput.addEventListener("input", onInput);
-  form.addEventListener("submit", onSubmit);
-  clearBtn.addEventListener("click", onClear);
+  cityInput.addEventListener("input", () => {
+    hideSuccess();
+    syncDisableState();
+  });
 
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey));
-    if (saved?.type === "city") {
-      cityInput.value = saved.value || "";
+  postcodeInput.addEventListener("input", () => {
+    hideSuccess();
+    syncDisableState();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideSuccess();
+
+    try {
+      await saveLocation();
+    } catch (err) {
+      alert(err.message); 
     }
-    if (saved?.type === "postcode") {
-      postInput.value = saved.value || "";
+  });
+
+  clearBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    hideSuccess();
+
+    try {
+      await clearLocation();
+    } catch (err) {
+      alert(err.message);
     }
-  } catch {}
+  });
 
   syncDisableState();
 });
