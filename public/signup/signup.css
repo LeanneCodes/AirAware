@@ -1,4 +1,4 @@
-/* ---------- Base reset ---------- */
+
 * {
     margin: 0;
     padding: 0;
@@ -10,7 +10,7 @@ html, body {
     height: 100%;
 }
 
-/* ---------- Split background: right panel image ---------- */
+
 body {
     min-height: 100vh;
     display: flex;
@@ -18,7 +18,7 @@ body {
     position: relative;
 }
 
-/* ---------- Left panel (the form) ---------- */
+
 form {
     width: 42%;
     min-width: 360px;
@@ -32,7 +32,7 @@ form {
     gap: 14px;
 }
 
-/* ---------- Right panel logo (big centered) ---------- */
+
 .page-logo {
     position: absolute;
     left: 72%;
@@ -45,7 +45,7 @@ form {
     pointer-events: none;
 }
 
-/* ---------- Headings ---------- */
+
 .login-title {
     font-size: 22px;
     font-weight: 600;
@@ -61,18 +61,18 @@ form {
     font-weight: 400;
 }
 
-/* ---------- Labels ---------- */
+
 label {
     font-size: 12px;
     color: #6a6a6a;
 }
 
-/* Remove <br> spacing side effects */
+
 br {
     display: none;
 }
 
-/* ---------- Inputs ---------- */
+
 input[type="email"],
 input[type="password"] {
     width: 100%;
@@ -89,7 +89,7 @@ input[type="password"]:focus {
     border-bottom-color: #0b5f85;
 }
 
-/* ---------- Primary button ---------- */
+
 button {
     margin-top: 18px;
     width: 100%;
@@ -111,7 +111,7 @@ button:active {
     transform: translateY(1px);
 }
 
-/* ---------- Bottom row (login/signup switch) ---------- */
+
 .signup-row {
     margin-top: 32px;
     display: flex;
@@ -124,7 +124,6 @@ button:active {
     color: #666;
 }
 
-/* Smaller secondary button */
 .signup-btn {
     height: 26px;
     padding: 0 12px;
@@ -141,7 +140,7 @@ button:active {
     background: #094c6b;
 }
 
-/* ---------- Responsive ---------- */
+
 @media (max-width: 900px) {
     body {
         background-position: center;
