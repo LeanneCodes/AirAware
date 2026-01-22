@@ -49,6 +49,14 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'signup.html'));
+});
+
+app.get('/user', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'user.html'));
+});
+
 /* API routes */
 app.use('/api/auth', authRouter);
 // app.use('/api/user', authMiddleware, userRouter);
