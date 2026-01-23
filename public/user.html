@@ -120,7 +120,11 @@
 
     /* Main content wrapper */
     .content{
-      padding: 2.25rem 0 2.75rem;
+      padding: 2.25rem 0 2.25rem;
+    }
+
+    .profile-section-title {
+      letter-spacing: 0.08em;
     }
 
     /* Form panel */
@@ -290,7 +294,11 @@
   <form class="formGrid">
     <!-- Small explanation box -->
     <div class="field" style="grid-column: 1 / -1;">
-      <p class="mb-0" style="color: rgba(15,23,42,0.65);">
+      <div class="text-uppercase small text-body-secondary mb-2 profile-section-title">
+        Profile details
+      </div>
+
+      <p class="mb-0 text-body-secondary">
         These details help AirAware+ personalise what you see in the app (for example, how we present alerts and summaries).
         You can leave optional fields blank, and you can update them at any time.
       </p>
