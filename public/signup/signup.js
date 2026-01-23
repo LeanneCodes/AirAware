@@ -1,35 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const confirmPasswordInput = document.getElementById("confirmPassword");
-  const passwordError = document.getElementById("passwordError");
-
-  function showError(message) {
-    passwordError.textContent = message;
-    passwordError.style.display = "block";
-  }
-
-  function clearError() {
-    passwordError.textContent = "";
-    passwordError.style.display = "none";
-  }
+  if (!form) return;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    clearError();
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
+    const email = document.getElementById("email")?.value?.trim().toLowerCase() || "";
+    const password = document.getElementById("password")?.value || "";
+    const confirmPassword = document.getElementById("confirmPassword")?.value || "";
 
-    
     if (!email || !password || !confirmPassword) {
-      return showError("All fields are required.");
+      return showError("Please fill in all fields.");
     }
 
     if (password.length < 6) {
-      return showError("Password must be at least 6 characters.");
+      alert("Password must be at least 6 characters.");
+      return;
     }
 
     if (password !== confirmPassword) {
@@ -37,33 +23,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch("/auth/register", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        
-        return showError(data.error || "Registration failed.");
+        alert(data.error || "Registration failed.");
+        return;
       }
 
-      
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      
-      window.location.href = "/dashboard";
+      alert("Account created successfully. Please log in.");
+      window.location.href = "/login";
     } catch (err) {
-      console.error("SIGNUP_ERROR", err);
-      showError("Something went wrong. Please try again.");
+      console.error(err);
+      alert("Something went wrong. Please try again.");
     }
   });
 });
+;
