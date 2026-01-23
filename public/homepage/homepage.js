@@ -128,6 +128,17 @@ function sensitivityLabelFromTriggerIdx(n) {
   return map[n] || "—";
 }
 
+function aqiClassFromIndex(n) {
+  const map = {
+    1: "aqi-good",
+    2: "aqi-fair",
+    3: "aqi-moderate",
+    4: "aqi-poor",
+    5: "aqi-very-poor",
+  };
+  return map[n] || "";
+}
+
 function pollutantIndex(key, value) {
   if (value === null || value === undefined) return null;
   const n = Number(value);
@@ -195,7 +206,23 @@ function renderSnapshot(current, status, thresholds) {
 
   // Overall AQI label
   const aqi = current?.aqi ?? null;
-  setText("snapshotAQLabel", aqiName(aqi));
+  const labelEl = document.getElementById("snapshotAQLabel");
+
+  if (labelEl) {
+    labelEl.textContent = aqiName(aqi);
+
+    // reset old classes
+    labelEl.classList.remove(
+      "aqi-good",
+      "aqi-fair",
+      "aqi-moderate",
+      "aqi-poor",
+      "aqi-very-poor"
+    );
+
+    const cls = aqiClassFromIndex(aqi);
+    if (cls) labelEl.classList.add(cls);
+  }
 
   // Note under the label (keep it simple + non-medical)
   const triggerIdx = thresholds?.effective_trigger_aqi ?? null;

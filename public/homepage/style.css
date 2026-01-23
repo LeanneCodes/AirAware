@@ -3,6 +3,11 @@
   --aa-primary-10: rgba(24, 95, 133, 0.1);
   --aa-primary-15: rgba(24, 95, 133, 0.15);
   --aa-ink: #0f172a;
+  --aq-good: #2f9e44;        /* green */
+  --aq-fair: #66a80f;        /* yellow-green */
+  --aq-moderate: #fab005;    /* amber */
+  --aq-poor: #e03131;        /* red */
+  --aq-very-poor: #6a040f;   /* dark red */
 }
 
 /* Navbar link styling */
@@ -170,4 +175,15 @@ body {
 
 .leaflet-control-attribution {
   font-size: 10px;
+}
+
+/* AQI text colouring */
+.aqi-good { color: var(--aq-good); }
+.aqi-fair { color: var(--aq-fair); }
+.aqi-moderate { color: var(--aq-moderate); }
+.aqi-poor { color: var(--aq-poor); }
+.aqi-very-poor { color: var(--aq-very-poor); }
+
+#snapshotAQLabel {
+  font-weight: 800;
 }
