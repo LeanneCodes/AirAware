@@ -225,6 +225,141 @@
           </div>
         </div>
       </section>
+
+      <!-- Pollutants explainer (accordion) -->
+      <section class="mt-4 mt-lg-5" aria-label="Pollutant explanations">
+        <div class="glass-card p-4 p-lg-4">
+          <div class="section-label">Understand the pollutants</div>
+
+          <p class="text-body-secondary mb-3">
+            AirAware+ tracks common outdoor air pollutants. This information is for environmental awareness only and is
+            <strong class="text-body">not medical advice</strong>.
+          </p>
+
+          <div class="accordion" id="pollutantsAccordion">
+            <!-- PM2.5 -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingPm25">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePm25" aria-expanded="false" aria-controls="collapsePm25">
+                  PM₂.₅ (fine particles)
+                </button>
+              </h3>
+              <div id="collapsePm25" class="accordion-collapse collapse" aria-labelledby="headingPm25" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    Tiny particles often linked to traffic, wood burning and industry. When levels are higher, they can worsen
+                    overall air quality and reduce visibility.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common sources:</strong> exhaust fumes, smoke, construction dust.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PM10 -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingPm10">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePm10" aria-expanded="false" aria-controls="collapsePm10">
+                  PM₁₀ (coarse particles)
+                </button>
+              </h3>
+              <div id="collapsePm10" class="accordion-collapse collapse" aria-labelledby="headingPm10" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    Larger particles such as dust, pollen and brake/tyre wear. Higher levels often show up during dry, dusty
+                    conditions and near busy roads.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common sources:</strong> road dust, construction, agriculture.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- NO2 -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingNo2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNo2" aria-expanded="false" aria-controls="collapseNo2">
+                  NO₂ (nitrogen dioxide)
+                </button>
+              </h3>
+              <div id="collapseNo2" class="accordion-collapse collapse" aria-labelledby="headingNo2" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    A gas strongly linked to traffic emissions. Levels tend to be higher near busy roads and can be lower in
+                    greener or less congested areas.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common sources:</strong> diesel engines, gas boilers, power generation.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- O3 -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingO3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseO3" aria-expanded="false" aria-controls="collapseO3">
+                  O₃ (ozone)
+                </button>
+              </h3>
+              <div id="collapseO3" class="accordion-collapse collapse" aria-labelledby="headingO3" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    Forms in sunlight when other pollutants react. It can be higher on warm, bright days and sometimes peaks
+                    away from city centres.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common conditions:</strong> sunny weather + stagnant air.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SO2 -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingSo2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSo2" aria-expanded="false" aria-controls="collapseSo2">
+                  SO₂ (sulphur dioxide)
+                </button>
+              </h3>
+              <div id="collapseSo2" class="accordion-collapse collapse" aria-labelledby="headingSo2" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    A gas linked to burning sulphur-containing fuels. Higher readings are more common near certain industrial
+                    sources or shipping routes.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common sources:</strong> shipping, industrial combustion.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CO -->
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="headingCo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCo" aria-expanded="false" aria-controls="collapseCo">
+                  CO (carbon monoxide)
+                </button>
+              </h3>
+              <div id="collapseCo" class="accordion-collapse collapse" aria-labelledby="headingCo" data-bs-parent="#pollutantsAccordion">
+                <div class="accordion-body text-body-secondary">
+                  <p class="mb-2">
+                    Produced by incomplete combustion. Outdoor levels are usually low, but can rise in heavy traffic or
+                    poorly ventilated areas near combustion sources.
+                  </p>
+                  <div class="small">
+                    <strong class="text-body">Common sources:</strong> vehicle exhaust, combustion in enclosed/poorly ventilated spaces.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <footer class="border-top" style="background: rgba(255, 255, 255, 0.7);">
