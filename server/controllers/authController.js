@@ -3,9 +3,6 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const Auth = require("../models/Auth");
 
-const ALLOWED_CONDITIONS = new Set(["asthma", "allergies", "both"]);
-const ALLOWED_SENSITIVITY = new Set(["low", "medium", "high"]);
-
 function signToken(user) {
   return jwt.sign(
     { email: user.email },
@@ -19,10 +16,10 @@ function signToken(user) {
 
 async function register(req, res) {
   try {
-    const { email, password,} = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: "email, password," });
+      return res.status(400).json({ error: "email and password are required" });
     }
 
     if (!validator.isEmail(email)) {
@@ -30,7 +27,9 @@ async function register(req, res) {
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
     }
 
     const existing = await Auth.getUserByEmail(email.toLowerCase());
@@ -43,8 +42,6 @@ async function register(req, res) {
     const user = await Auth.createUser({
       email: email.toLowerCase(),
       passwordHash,
-      conditionType: condition_type,
-      sensitivityLevel: sensitivity_level,
     });
 
     const token = signToken({ id: user.id, email: user.email });
@@ -54,12 +51,10 @@ async function register(req, res) {
       user: {
         id: user.id,
         email: user.email,
-        condition_type: user.condition_type,
-        sensitivity_level: user.sensitivity_level,
       },
     });
   } catch (err) {
-    console.log("REGISTER_ERROR", err);
+    console.error("REGISTER_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
@@ -89,19 +84,22 @@ async function login(req, res) {
       user: {
         id: user.id,
         email: user.email,
-        condition_type: user.condition_type,
-        sensitivity_level: user.sensitivity_level,
       },
     });
   } catch (err) {
-    console.log("LOGIN_ERROR", err);
+    console.error("LOGIN_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
 
 async function me(req, res) {
-  // req.user set by authMiddleware
-  return res.json({ user: req.user });
+  // req.user is set by authMiddleware
+  return res.json({
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+    },
+  });
 }
 
 module.exports = {
