@@ -1,242 +1,235 @@
-  export function initDashboardPage(doc = document, deps = {}) {
-  const fetchFn = deps.fetchFn ?? window.fetch.bind(window);
-  const storage = deps.storage ?? window.localStorage;
-
-  
-  const navHomeLinks = [...doc.querySelectorAll('a[href*="index.html"], a[href*="homepage"]')];
-  const navLogoLink = doc.querySelector(".navleft");
-
-  
-  const refreshBtn = doc.querySelector("#refreshBtn");
-
-  const riskText = doc.querySelector("#riskText");
-  const cityName = doc.querySelector("#cityName");
-  const currentDate = doc.querySelector("#currentDate");
-  const aqStatus = doc.querySelector("#aqStatus");
-
-  const recentAlerts = doc.querySelector("#recentAlerts");
-  const recommendations = doc.querySelector("#recommendations");
-
-  
-  let errorBox = doc.querySelector("#dashError");
-  let loadingTag = doc.querySelector("#dashLoading");
-
-  
-  const metricMap = {
-    pm25: { value: "#pm25Value", label: "#pm25Label" },
-    pm10: { value: "#pm10Value", label: "#pm10Label" },
-    so2:  { value: "#so2Value",  label: "#so2Label" },
-    no2:  { value: "#no2Value",  label: "#no2Label" },
-    o3:   { value: "#o3Value",   label: "#o3Label" },
-    co:   { value: "#coValue",   label: "#coLabel" },
+document.addEventListener("DOMContentLoaded", () => {
+  const API = {
+    dashboard: "/api/dashboard",
+    refresh: "/api/dashboard/refresh",
+    locationHistory: "/api/location/history",
   };
 
-  const savedButtons = [...doc.querySelectorAll("[data-city]")];
+  // Navbar / header
+  const riskText = document.getElementById("riskText");
+  const activeSearchName = document.getElementById("activeSearchName");
+  const savedSearches = document.getElementById("savedSearches");
 
-  
-  let currentCity = storage.getItem("airaware_city") || "London";
+  // Info pill
+  const locationName = document.getElementById("locationName");
+  const currentDateTime = document.getElementById("currentDateTime");
+  const overallAQ = document.getElementById("overallAQ");
 
- 
-  function ensureStatusElements() {
-    
-    if (!errorBox) {
-      errorBox = doc.createElement("div");
-      errorBox.id = "dashError";
-      errorBox.style.display = "none";
-      errorBox.style.margin = "10px 0";
-      errorBox.style.padding = "10px 12px";
-      errorBox.style.borderRadius = "12px";
-      errorBox.style.background = "rgba(0,0,0,.55)";
-      errorBox.style.color = "white";
-      errorBox.style.fontWeight = "700";
-      const anchor = doc.querySelector(".center") || doc.body;
-      anchor.prepend(errorBox);
+  // Pollutants
+  const pollutantEls = {
+    pm25: { value: document.getElementById("pm25Value"), status: document.getElementById("pm25Status") },
+    pm10: { value: document.getElementById("pm10Value"), status: document.getElementById("pm10Status") },
+    so2:  { value: document.getElementById("so2Value"),  status: document.getElementById("so2Status")  },
+    no2:  { value: document.getElementById("no2Value"),  status: document.getElementById("no2Status")  },
+    o3:   { value: document.getElementById("o3Value"),   status: document.getElementById("o3Status")   },
+    co:   { value: document.getElementById("coValue"),   status: document.getElementById("coStatus")   },
+  };
+
+  const recommendationsEl = document.getElementById("recommendations");
+  const recentAlertsEl = document.getElementById("recentAlerts");
+  const refreshBtn = document.getElementById("refreshBtn");
+
+  let locationsHistory = [];
+
+  function getTokenOrRedirect() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.replace("/login");
+      return null;
     }
-
-    if (!loadingTag) {
-      loadingTag = doc.createElement("div");
-      loadingTag.id = "dashLoading";
-      loadingTag.style.display = "none";
-      loadingTag.style.margin = "10px 0";
-      loadingTag.style.textAlign = "center";
-      loadingTag.style.fontWeight = "800";
-      loadingTag.style.color = "rgba(15,23,42,.85)";
-      const anchor = doc.querySelector(".center") || doc.body;
-      anchor.prepend(loadingTag);
-    }
+    return token;
   }
 
-  function setLoading(isLoading) {
-    if (!loadingTag) return;
-    loadingTag.style.display = isLoading ? "block" : "none";
-    loadingTag.textContent = isLoading ? "Loading dashboard data..." : "";
-    if (refreshBtn) refreshBtn.disabled = isLoading;
+  async function apiFetch(url, options = {}) {
+    const token = getTokenOrRedirect();
+    if (!token) return null;
+
+    const res = await fetch(url, {
+      method: options.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: options.body,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    return data;
   }
 
-  function setError(msg) {
-    if (!errorBox) return;
-    errorBox.style.display = msg ? "block" : "none";
-    errorBox.textContent = msg || "";
-  }
-
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function setActiveSaved(city) {
-    savedButtons.forEach(btn => {
-      const btnCity = (btn.getAttribute("data-city") || "").toLowerCase();
-      btn.classList.toggle("active", btnCity === city.toLowerCase());
+  function formatNowUK() {
+    return new Date().toLocaleString("en-GB", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
-  function updateRiskBanner(level, dominant) {
-    if (!riskText) return;
-    const lv = level || "Medium";
-    const dom = dominant || "Unknown";
-    riskText.textContent = `${lv} Risk | Dominant pollutant: ${dom}, based on your alert threshold`;
+  function startClock() {
+    if (!currentDateTime) return;
+    currentDateTime.textContent = formatNowUK();
+    setInterval(() => {
+      currentDateTime.textContent = formatNowUK();
+    }, 30_000);
   }
 
-  function updateTopInfo(data) {
-    if (cityName) cityName.textContent = data.city || currentCity;
-    if (currentDate) currentDate.textContent = data.timeText || "-";
-    if (aqStatus) aqStatus.textContent = data.airQualityLabel || "Unknown";
+  function aqiName(n) {
+    const map = { 1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Very Poor" };
+    return map[n] || "Unknown";
   }
 
-  function updateMetrics(metrics = {}) {
-    Object.keys(metricMap).forEach((k) => {
-      const vEl = doc.querySelector(metricMap[k].value);
-      const lEl = doc.querySelector(metricMap[k].label);
-
-      const v = metrics[k];
-      if (vEl) vEl.textContent = (v === null || v === undefined) ? "-" : String(v);
-
-      
-      if (lEl && metrics[`${k}Label`]) lEl.textContent = String(metrics[`${k}Label`]);
-    });
+  function round(x) {
+    if (x === null || x === undefined) return "—";
+    const n = Number(x);
+    if (Number.isNaN(n)) return "—";
+    return n >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
   }
 
-  function updateAlerts(alerts = []) {
-    if (!recentAlerts) return;
+  function setText(el, text) {
+    if (el) el.textContent = text;
+  }
+
+  function renderHeader(payload) {
+    const locLabel = payload?.location?.label || "—";
+    setText(locationName, locLabel);
+    setText(activeSearchName, locLabel);
+
+    const aqiNum = payload?.current?.aqi ?? payload?.status?.aqi_label ?? null;
+    setText(overallAQ, aqiName(aqiNum));
+
+    const status = payload?.status;
+    if (riskText) {
+      if (!status) {
+        riskText.textContent = "No recent risk assessment available yet.";
+      } else {
+        riskText.textContent = `${status.risk_level} Risk | Dominant pollutant: ${status.dominant_pollutant}, based on your alert threshold`;
+      }
+    }
+  }
+
+  function renderPollutants(payload) {
+    const p = payload?.current?.pollutants;
+    if (!p) return;
+
+    setText(pollutantEls.pm25.value, round(p.pm25));
+    setText(pollutantEls.pm10.value, round(p.pm10));
+    setText(pollutantEls.so2.value,  round(p.so2));
+    setText(pollutantEls.no2.value,  round(p.no2));
+    setText(pollutantEls.o3.value,   round(p.o3));
+    setText(pollutantEls.co.value,   round(p.co));
+
+    // You can later compute pollutant statuses; for now keep simple
+    Object.values(pollutantEls).forEach(({ status }) => setText(status, "—"));
+  }
+
+  function renderRecommendations(payload) {
+    if (!recommendationsEl) return;
+
+    const recs = payload?.recommendations || [];
+    // Keep your existing header line in HTML, then fill below it
+    const lines = recs.length
+      ? recs.map(r => `<div class="recoLine">${r.text}</div>`).join("")
+      : `<div class="recoLine">No recommendations available yet.</div>`;
+
+    recommendationsEl.innerHTML = `
+      <div class="recoTitle">Recommendations</div>
+      ${lines}
+    `;
+  }
+
+  function renderAlerts(payload) {
+    if (!recentAlertsEl) return;
+    const alerts = payload?.alerts || [];
+
     if (!alerts.length) {
-      recentAlerts.innerHTML = `<div class="alertItem">No recent alerts</div>`;
+      recentAlertsEl.innerHTML = `<div class="aa-alert-line"><span>—</span><span>No alerts yet</span></div>`;
       return;
     }
-    recentAlerts.innerHTML = alerts
-      .slice(0, 6)
-      .map(a => `<div class="alertItem">${escapeHtml(a.time)} — ${escapeHtml(a.message)}</div>`)
+
+    recentAlertsEl.innerHTML = alerts
+      .slice(0, 5)
+      .map(a => {
+        const t = new Date(a.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        return `<div class="aa-alert-line"><span>${t}</span><span>— ${a.risk_level}</span></div>`;
+      })
       .join("");
   }
 
-  function updateRecommendations(list = []) {
-    if (!recommendations) return;
-    if (!list.length) {
-      recommendations.innerHTML = `<div>Conditions look favourable today based on your profile.</div>`;
+  async function loadLocationHistory() {
+    const data = await apiFetch(API.locationHistory);
+    locationsHistory = data?.locations || [];
+
+    if (!savedSearches) return;
+
+    savedSearches.innerHTML = "";
+    locationsHistory.forEach(loc => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "aa-btn-ghost";
+      btn.textContent = loc.label;
+
+      // IMPORTANT: right now your dashboard backend always uses the user's "home" location.
+      // Clicking these can't change dashboard data unless we add a "select home" endpoint.
+      btn.addEventListener("click", () => {
+        alert("To switch dashboard location, we need an endpoint to set this as your active (home) location.");
+      });
+
+      savedSearches.appendChild(btn);
+    });
+  }
+
+  async function loadDashboard() {
+    const payload = await apiFetch(API.dashboard);
+
+    // If user hasn't set location, backend tells you location=null
+    if (!payload?.location) {
+      window.location.replace("/location");
       return;
     }
-    recommendations.innerHTML = list.slice(0, 6).map(t => `<div>${escapeHtml(t)}</div>`).join("");
+
+    renderHeader(payload);
+    renderPollutants(payload);
+    renderRecommendations(payload);
+    renderAlerts(payload);
   }
 
-  
-  function updateChart(series = []) {
-   
-    return series;
-  }
-  
-  async function fetchDashboard(city) {
-    
-    const url = `/api/dashboard?label=${encodeURIComponent(city)}`;
-    const res = await fetchFn(url);
-    if (!res.ok) throw new Error(`Dashboard API failed (${res.status})`);
-    return res.json();
+  async function refreshDashboard() {
+    const payload = await apiFetch(API.refresh, { method: "POST" });
+
+    if (payload?.state?.needs_location) {
+      window.location.replace("/location");
+      return;
+    }
+
+    renderHeader(payload);
+    renderPollutants(payload);
+    renderRecommendations(payload);
+    renderAlerts(payload);
   }
 
-  async function loadDashboard(city, { pushHistory = true } = {}) {
-    ensureStatusElements();
-    setError("");
-    setLoading(true);
-
+  refreshBtn?.addEventListener("click", async () => {
     try {
-      currentCity = city;
-      storage.setItem("airaware_city", currentCity);
-      setActiveSaved(currentCity);
+      refreshBtn.disabled = true;
+      await refreshDashboard();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  });
 
-      const data = await fetchDashboard(currentCity);
-
-      updateRiskBanner(data.riskLevel, data.dominantPollutant);
-      updateTopInfo(data);
-      updateMetrics(data.metrics);
-      updateAlerts(data.alerts);
-      updateRecommendations(data.recommendations);
-      updateChart(data.series);
-
-      if (pushHistory) {
-        const newUrl = `${window.location.pathname}?city=${encodeURIComponent(currentCity)}`;
-        window.history.pushState({ city: currentCity }, "", newUrl);
-      }
+  (async function init() {
+    try {
+      startClock();
+      await loadLocationHistory();
+      await loadDashboard();
     } catch (err) {
       console.error(err);
-      setError("Could not load dashboard data. Please try again.");
-    } finally {
-      setLoading(false);
+      alert(err.message || "Dashboard failed to load.");
     }
-  }
-
-  
-  function wireNavbar() {
-    
-    if (navLogoLink) {
-      
-      if (!navLogoLink.getAttribute("href")) navLogoLink.setAttribute("href", "./index.html");
-    }
-
-    
-    navHomeLinks.forEach(a => {
-      a.addEventListener("click", () => {
-      y
-      });
-    });
-  }
-
-  
-  function wireEvents() {
-    refreshBtn?.addEventListener("click", () => loadDashboard(currentCity, { pushHistory: false }));
-
-    savedButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const city = btn.getAttribute("data-city");
-        if (city) loadDashboard(city);
-      });
-    });
-
-    
-    window.addEventListener("popstate", (e) => {
-      const city = e.state?.city || new URLSearchParams(window.location.search).get("city") || storage.getItem("airaware_city") || "London";
-      loadDashboard(city, { pushHistory: false });
-    });
-  }
-
- 
-  function init() {
-    wireNavbar();
-    wireEvents();
-
-    
-    const qsCity = new URLSearchParams(window.location.search).get("city");
-    const initial = qsCity || currentCity;
-    loadDashboard(initial, { pushHistory: false });
-  }
-
-  init();
-
-  return { loadDashboard, fetchDashboard };
-}
-
-if (typeof window !== "undefined") {
-  window.addEventListener("DOMContentLoaded", () => initDashboardPage());
-}
+  })();
+});
