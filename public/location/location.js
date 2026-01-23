@@ -8,10 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const API_BASE = "/api/location";
   const REDIRECT_DELAY_MS = 800;
 
-  /* Helper functions */
-
   function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   function showSuccess(msg) {
@@ -34,12 +32,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return token;
   }
 
+  // Keep this light: don't "correct" spelling/casing.
+  // Just trim and collapse multiple spaces so we don't send messy strings.
   function normaliseCity(raw) {
     return raw.trim().replace(/\s+/g, " ");
   }
 
   function normalisePostcode(raw) {
     let pc = raw.trim().toUpperCase().replace(/\s+/g, " ");
+    // If typed without a space, insert before last 3 chars (e.g. SW1P1RT -> SW1P 1RT)
     if (!pc.includes(" ") && pc.length > 3) {
       pc = pc.slice(0, -3) + " " + pc.slice(-3);
     }
@@ -66,9 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const city = normaliseCity(cityInput.value);
     const postcode = normalisePostcode(postcodeInput.value);
 
-    cityInput.value = city;
-    postcodeInput.value = postcode;
-
     if (!city && !postcode) {
       throw new Error("Please enter either a city or a postcode.");
     }
@@ -76,48 +74,65 @@ document.addEventListener("DOMContentLoaded", () => {
       throw new Error("Please use only one: city OR postcode.");
     }
 
+    // IMPORTANT: we do NOT overwrite the input boxes with resolved labels.
+    // We only send a cleaned value to the backend.
     return city ? { city } : { postcode };
   }
 
   async function apiFetch(path, options = {}) {
     const token = getTokenOrRedirect();
-    if (!token) return;
+    if (!token) return null;
 
     const res = await fetch(path, {
       method: options.method || "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
       },
       body: options.body,
     });
 
     const data = await res.json().catch(() => ({}));
-
     if (!res.ok) {
-      throw new Error(data.error || `Request failed (${res.status})`);
+      throw new Error(data.error || data.message || `Request failed (${res.status})`);
     }
-
     return data;
   }
 
-  /* Core Logic */
+  async function loadExistingLocation() {
+    try {
+      const data = await apiFetch(API_BASE);
+      if (!data?.location) return;
+
+      // Show what is actually saved in DB, without overwriting what the user typed.
+      showSuccess(`Current saved location: ${data.location.label}`);
+      cityInput.value = "";
+      postcodeInput.value = "";
+      syncDisableState();
+    } catch (err) {
+      // no saved location yet is fine
+      if (String(err.message).toLowerCase().includes("no saved location")) return;
+      console.error("Load location error:", err);
+    }
+  }
 
   async function saveLocation() {
     const payload = getPayload();
 
+    // POST first; if it fails (e.g. constraints/logic), PATCH fallback
     try {
-      await apiFetch(API_BASE, {
+      const data = await apiFetch(API_BASE, {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      return "saved";
+      return { action: "saved", label: data?.location?.label || null };
     } catch {
-      await apiFetch(API_BASE, {
+      const data = await apiFetch(API_BASE, {
         method: "PATCH",
         body: JSON.stringify(payload),
       });
-      return "updated";
+      return { action: "updated", label: data?.location?.label || null };
     }
   }
 
@@ -147,15 +162,14 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const result = await saveLocation();
 
-      showSuccess(
-        result === "saved"
-          ? "Location saved successfully."
-          : "Location updated successfully."
-      );
+      if (result.label) {
+        showSuccess(`Location ${result.action} as: ${result.label}`);
+      } else {
+        showSuccess(`Location ${result.action} successfully.`);
+      }
 
       await sleep(REDIRECT_DELAY_MS);
       window.location.replace("/dashboard");
-
     } catch (err) {
       alert(err.message);
     }
@@ -173,4 +187,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   syncDisableState();
+  loadExistingLocation();
 });
