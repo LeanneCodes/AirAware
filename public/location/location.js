@@ -6,6 +6,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const successEl = document.querySelector("#saveSuccess");
 
   const API_BASE = "/api/location";
+  const REDIRECT_DELAY_MS = 800;
+
+  /* Helper functions */
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   function showSuccess(msg) {
     if (!successEl) return;
@@ -16,6 +23,27 @@ document.addEventListener("DOMContentLoaded", () => {
   function hideSuccess() {
     if (!successEl) return;
     successEl.style.display = "none";
+  }
+
+  function getTokenOrRedirect() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.replace("/login");
+      return null;
+    }
+    return token;
+  }
+
+  function normaliseCity(raw) {
+    return raw.trim().replace(/\s+/g, " ");
+  }
+
+  function normalisePostcode(raw) {
+    let pc = raw.trim().toUpperCase().replace(/\s+/g, " ");
+    if (!pc.includes(" ") && pc.length > 3) {
+      pc = pc.slice(0, -3) + " " + pc.slice(-3);
+    }
+    return pc;
   }
 
   function syncDisableState() {
@@ -35,58 +63,61 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getPayload() {
-    const city = cityInput.value.trim();
-    const post = postcodeInput.value.trim();
+    const city = normaliseCity(cityInput.value);
+    const postcode = normalisePostcode(postcodeInput.value);
 
-    if (!city && !post) {
-      return { error: "Please enter either a city or a postcode." };
+    cityInput.value = city;
+    postcodeInput.value = postcode;
+
+    if (!city && !postcode) {
+      throw new Error("Please enter either a city or a postcode.");
     }
-    if (city && post) {
-      return { error: "Please use only one: city OR postcode." };
+    if (city && postcode) {
+      throw new Error("Please use only one: city OR postcode.");
     }
-    return city ? { city } : { postcode: post };
+
+    return city ? { city } : { postcode };
   }
 
-  async function apiFetch(url, options) {
-    const res = await fetch(url, {
-      ...options,
+  async function apiFetch(path, options = {}) {
+    const token = getTokenOrRedirect();
+    if (!token) return;
+
+    const res = await fetch(path, {
+      method: options.method || "GET",
       headers: {
         "Content-Type": "application/json",
-        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
       },
-      credentials: "include", 
+      body: options.body,
     });
 
     const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const msg = data.error || data.message || `Request failed (${res.status})`;
-      throw new Error(msg);
+      throw new Error(data.error || `Request failed (${res.status})`);
     }
+
     return data;
   }
 
-  
+  /* Core Logic */
+
   async function saveLocation() {
     const payload = getPayload();
-    if (payload.error) throw new Error(payload.error);
 
     try {
       await apiFetch(API_BASE, {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      showSuccess("Location saved successfully.");
-    } catch (err) {
-  
-      if (String(err.message).toLowerCase().includes("already") || String(err.message).includes("POST /location first")) {
-        await apiFetch(API_BASE, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
-        showSuccess("Location updated successfully.");
-      } else {
-        throw err;
-      }
+      return "saved";
+    } catch {
+      await apiFetch(API_BASE, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      return "updated";
     }
   }
 
@@ -95,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
     postcodeInput.value = "";
     syncDisableState();
 
-    
     await apiFetch(API_BASE, { method: "DELETE" });
     showSuccess("Location successfully cleared.");
   }
@@ -115,9 +145,19 @@ document.addEventListener("DOMContentLoaded", () => {
     hideSuccess();
 
     try {
-      await saveLocation();
+      const result = await saveLocation();
+
+      showSuccess(
+        result === "saved"
+          ? "Location saved successfully."
+          : "Location updated successfully."
+      );
+
+      await sleep(REDIRECT_DELAY_MS);
+      window.location.replace("/dashboard");
+
     } catch (err) {
-      alert(err.message); 
+      alert(err.message);
     }
   });
 
