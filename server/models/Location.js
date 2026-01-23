@@ -220,6 +220,37 @@ class Location {
 
         return response.rows.map(row => new Location(row));
     }
+
+    /*
+     * Controller: selectLocation
+     */
+    static async setHomeById({ userId, locationId }) {
+        // Confirm it belongs to this user
+        const { rows: exists } = await db.query(
+            `SELECT id FROM locations WHERE id = $1 AND user_id = $2 LIMIT 1;`,
+            [locationId, userId]
+        );
+
+        if (!exists[0]) return null;
+
+        // Unset any existing home
+        await db.query(
+            `UPDATE locations SET is_home = FALSE WHERE user_id = $1 AND is_home = TRUE;`,
+            [userId]
+        );
+
+        // Set chosen location as home
+        const { rows } = await db.query(
+            `UPDATE locations
+            SET is_home = TRUE
+            WHERE id = $1 AND user_id = $2
+            RETURNING *;`,
+            [locationId, userId]
+        );
+
+        return rows[0] ? new Location(rows[0]) : null;
+    }
+
 }
 
 module.exports = Location;

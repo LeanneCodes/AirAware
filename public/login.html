@@ -13,55 +13,8 @@
       rel="stylesheet"
     />
 
-    <style>
-      .bg-pane {
-        position: relative;
-        overflow: hidden;
-        background-image: url("/assets/web-bg.jpg");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-      }
+    <link rel="stylesheet" href="/login/login.css">
 
-      .form-underline {
-        border: 0;
-        border-bottom: 1px solid var(--bs-border-color);
-        border-radius: 0;
-        padding-left: 0;
-        padding-right: 0;
-        background-color: transparent;
-      }
-
-      .form-underline:focus {
-        box-shadow: none;
-        border-bottom-color: var(--bs-primary);
-      }
-
-      .bg-pane::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          135deg,
-          rgba(24, 95, 133, 0.65) 0%,
-          rgba(24, 95, 133, 0.35) 40%,
-          rgba(0, 0, 0, 0.25) 100%
-        );
-        z-index: 0;
-        pointer-events: none;
-      }
-
-      .bg-pane > * {
-        position: relative;
-        z-index: 1;
-      }
-
-      @media (max-width: 767.98px) {
-        .bg-pane {
-          display: none !important;
-        }
-      }
-    </style>
   </head>
 
   <body class="bg-white">

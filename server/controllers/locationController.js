@@ -135,6 +135,27 @@ async function getLocationHistory(req, res) {
   }
 }
 
+async function selectLocation(req, res) {
+  const userId = req.user?.id;
+  const locationId = req.body?.locationId;
+
+  try {
+    if (!userId) return res.status(401).json({ error: "Unauthorised" });
+    if (!locationId) return res.status(400).json({ error: "locationId is required" });
+
+    const location = await Location.setHomeById({ userId, locationId });
+
+    if (!location) {
+      return res.status(404).json({ error: "Location not found for this user" });
+    }
+
+    return res.status(200).json({ location });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+}
+
+
 module.exports = {
   setLocation,
   getLocation,
@@ -142,4 +163,5 @@ module.exports = {
   validateLocation,
   deleteLocation,
   getLocationHistory,
+  selectLocation,
 };

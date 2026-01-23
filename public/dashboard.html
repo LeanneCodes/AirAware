@@ -6,7 +6,6 @@
   <title>AirAware+ | Dashboard</title>
   <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon" />
 
-  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -14,55 +13,12 @@
     crossorigin="anonymous"
   />
 
-  <link rel="stylesheet" href="/dashboard/style.css" />
+  <link rel="stylesheet" href="/dashboard/style.css">
 
-  <style>
-    :root { --aa-primary: #185f85; }
-
-    /* Navbar */
-    .navbar .nav-link { color: var(--aa-primary); font-weight: 600; }
-    .navbar .nav-link:hover, .navbar .nav-link:focus { color: #134e6d; }
-    .navbar .nav-link.active { color: var(--aa-primary); font-weight: 700; }
-    .navbar .welcome-text { color: #111; font-weight: 300; }
-
-    /* Brand outline button (profile icon) */
-    .btn-outline-aa{
-      border-color: var(--aa-primary);
-      color: var(--aa-primary);
-      background: transparent;
-    }
-
-    .btn-outline-aa:hover,
-    .btn-outline-aa:focus{
-      background-color: var(--aa-primary);
-      border-color: var(--aa-primary);
-      color: #fff;
-    }
-
-    /* Footer links */
-    .footer-link {
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 500;
-      color: #185f85;
-      text-decoration: none;
-      background-color: rgba(24, 95, 133, 0.08);
-      transition: background-color 0.15s ease, color 0.15s ease;
-    }
-    .footer-link:hover, .footer-link:focus {
-      background-color: rgba(24, 95, 133, 0.15);
-      color: #134e6d;
-      text-decoration: none;
-    }
-
-    body.page { min-height: 100vh; display: flex; flex-direction: column; }
-    main.dash { flex: 1; }
-  </style>
 </head>
 
 <body class="page">
 
-  <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
     <div class="container-fluid px-3 px-lg-4">
       <a class="navbar-brand" href="/" aria-label="AirAware+ Home">
@@ -76,24 +32,14 @@
 
       <div class="collapse navbar-collapse" id="airawareNavbar">
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-3">
-          <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" href="/dashboard">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/threshold">Sensitivity</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/location">Location</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="/threshold">Sensitivity</a></li>
+          <li class="nav-item"><a class="nav-link" href="/location">Location</a></li>
         </ul>
 
         <div class="d-flex align-items-center gap-3 ms-lg-4">
-          <span class="welcome-text">
-            Welcome, <span id="welcomeUserName">User</span>
-          </span>
+          <span class="welcome-text">Welcome, <span id="welcomeUserName">User</span></span>
 
           <a class="btn btn-outline-aa btn-sm d-flex align-items-center justify-content-center"
              href="/user"
@@ -114,111 +60,136 @@
   </div>
 
   <main class="dash">
-    <aside class="sidebar" aria-label="Saved searches and alerts">
-      <section class="sideCard">
-        <h2 class="sideTitle">Saved searches</h2>
+    <div class="dash-wrap">
+      <div class="dash-grid">
 
-        <button class="sideBtn sideBtnActive" type="button" id="activeSearchBtn">
-          <span id="activeSearchName">London</span>
-        </button>
-
-        <div class="sideList" id="savedSearches">
-          <button class="sideListItem" type="button" data-city="Leeds">Leeds</button>
-          <button class="sideListItem" type="button" data-city="Manchester">Manchester</button>
-          <button class="sideListItem" type="button" data-city="Bristol">Bristol</button>
-        </div>
-      </section>
-
-      <section class="sideCard">
-        <h2 class="sideTitle">Recent Alerts</h2>
-
-        <div class="alertsBox" id="recentAlerts">
-          <div class="alertLine"><span>11:03</span><span>— xxxx</span></div>
-          <div class="alertLine"><span>2:12</span><span>— xxxx</span></div>
-        </div>
-      </section>
-    </aside>
-
-    <section class="mainCol" aria-label="Dashboard content">
-      <section class="topRow">
-        <div class="infoPill" id="infoPill">
-          <span>Current location: <strong id="locationName">London</strong></span>
-          <span class="divider">|</span>
-          <span id="currentDateTime">Wednesday 21st January 2026 15:20</span>
-          <span class="divider">|</span>
-          <span>Current Air Quality: <strong id="overallAQ">Moderate</strong></span>
-        </div>
-
-        <button class="refreshBtn" id="refreshBtn" type="button" aria-label="Refresh data">
-          <span>Refresh Data</span>
-          <span class="refreshIcon" aria-hidden="true">↻</span>
-        </button>
-      </section>
-
-      <section class="midRow">
-        <div class="panel">
-          <div class="panelHeader">Air Pollutants</div>
-
-          <div class="pollutantGrid" id="pollutantGrid">
-            <article class="pollCard" data-pollutant="pm25">
-              <div class="pollName">PM 2.5</div>
-              <div class="pollValue" id="pm25Value">10</div>
-              <div class="pollStatus" id="pm25Status">Good</div>
-            </article>
-
-            <article class="pollCard" data-pollutant="pm10">
-              <div class="pollName">PM 10</div>
-              <div class="pollValue" id="pm10Value">8</div>
-              <div class="pollStatus" id="pm10Status">Good</div>
-            </article>
-
-            <article class="pollCard" data-pollutant="so2">
-              <div class="pollName">SO₂</div>
-              <div class="pollValue" id="so2Value">64</div>
-              <div class="pollStatus" id="so2Status">Fair</div>
-            </article>
-
-            <article class="pollCard" data-pollutant="no2">
-              <div class="pollName">NO₂</div>
-              <div class="pollValue" id="no2Value">112</div>
-              <div class="pollStatus" id="no2Status">Moderate</div>
-            </article>
-
-            <article class="pollCard" data-pollutant="o3">
-              <div class="pollName">O₃</div>
-              <div class="pollValue" id="o3Value">143</div>
-              <div class="pollStatus" id="o3Status">Poor</div>
-            </article>
-
-            <article class="pollCard" data-pollutant="co">
-              <div class="pollName">CO</div>
-              <div class="pollValue" id="coValue">13284</div>
-              <div class="pollStatus" id="coStatus">Very Poor</div>
-            </article>
+        <!-- SIDEBAR -->
+        <aside class="aa-card" aria-label="Saved searches and alerts">
+          <div class="aa-card-header">
+            <h2 class="aa-card-title">Saved searches</h2>
           </div>
-        </div>
+          <div class="aa-card-body">
+            <button class="aa-btn-ghost active" type="button" id="activeSearchBtn">
+              <span id="activeSearchName">London</span>
+            </button>
 
-        <aside class="recoPanel" aria-label="Recommendations">
-          <div class="recoHeader">Recommendations</div>
-          <div class="recoBody" id="recommendations">
-            <div class="recoTitle">NHS recommendations</div>
-            <div class="recoLine">xxx</div>
-            <div class="recoLine">xxx</div>
-            <div class="recoLine">xxx</div>
+            <div class="aa-list" id="savedSearches" aria-label="Saved searches list">
+              <button class="aa-btn-ghost" type="button" data-city="Leeds">Leeds</button>
+              <button class="aa-btn-ghost" type="button" data-city="Manchester">Manchester</button>
+              <button class="aa-btn-ghost" type="button" data-city="Bristol">Bristol</button>
+            </div>
+          </div>
+
+          <div class="aa-card-header" style="border-top:1px solid var(--aa-border);">
+            <h2 class="aa-card-title">Recent alerts</h2>
+          </div>
+          <div class="aa-card-body" id="recentAlerts" aria-label="Recent alerts">
+            <div class="aa-alert-line"><span>11:03</span><span>— xxxx</span></div>
+            <div class="aa-alert-line"><span>02:12</span><span>— xxxx</span></div>
           </div>
         </aside>
-      </section>
 
-      <section class="chartPanel" aria-label="Pollutants over time">
-        <div class="chartWrap">
-          <canvas id="pollutantsChart" width="1200" height="320" aria-label="AQI over time chart"></canvas>
-        </div>
-        <div class="chartCaption" id="chartCaption">Pollutants over time</div>
-      </section>
-    </section>
+        <!-- MAIN -->
+        <section class="d-grid gap-3" aria-label="Dashboard content">
+
+          <section class="topRow">
+            <div class="infoPill" id="infoPill">
+              <span>Current location: <strong id="locationName">London</strong></span>
+              <span class="divider">|</span>
+              <span id="currentDateTime">Wednesday 21st January 2026 15:20</span>
+              <span class="divider">|</span>
+              <span>Current Air Quality: <strong id="overallAQ">Moderate</strong></span>
+            </div>
+
+            <button class="refreshBtn" id="refreshBtn" type="button" aria-label="Refresh data">
+              <span>Refresh data</span>
+              <span class="refreshIcon" aria-hidden="true">↻</span>
+            </button>
+          </section>
+
+          <section class="midRow">
+            <div class="aa-card">
+              <div class="aa-card-header">
+                <h2 class="aa-card-title">Air pollutants</h2>
+              </div>
+              <div class="aa-card-body">
+                <div class="pollutantGrid" id="pollutantGrid">
+                  <article class="pollCard" data-pollutant="pm25">
+                    <div class="pollName">PM 2.5</div>
+                    <div class="pollValue" id="pm25Value">10</div>
+                    <div class="pollStatus" id="pm25Status">Good</div>
+                  </article>
+
+                  <article class="pollCard" data-pollutant="pm10">
+                    <div class="pollName">PM 10</div>
+                    <div class="pollValue" id="pm10Value">8</div>
+                    <div class="pollStatus" id="pm10Status">Good</div>
+                  </article>
+
+                  <article class="pollCard" data-pollutant="so2">
+                    <div class="pollName">SO₂</div>
+                    <div class="pollValue" id="so2Value">64</div>
+                    <div class="pollStatus" id="so2Status">Fair</div>
+                  </article>
+
+                  <article class="pollCard" data-pollutant="no2">
+                    <div class="pollName">NO₂</div>
+                    <div class="pollValue" id="no2Value">112</div>
+                    <div class="pollStatus" id="no2Status">Moderate</div>
+                  </article>
+
+                  <article class="pollCard" data-pollutant="o3">
+                    <div class="pollName">O₃</div>
+                    <div class="pollValue" id="o3Value">143</div>
+                    <div class="pollStatus" id="o3Status">Poor</div>
+                  </article>
+
+                  <article class="pollCard" data-pollutant="co">
+                    <div class="pollName">CO</div>
+                    <div class="pollValue" id="coValue">13284</div>
+                    <div class="pollStatus" id="coStatus">Very Poor</div>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+            <aside class="aa-card" aria-label="Recommendations">
+              <div class="aa-card-header">
+                <h2 class="aa-card-title">Recommendations</h2>
+              </div>
+              <div class="aa-card-body" id="recommendations">
+                <div class="recoTitle">NHS recommendations</div>
+                <div class="recoLine">xxx</div>
+                <div class="recoLine">xxx</div>
+                <div class="recoLine">xxx</div>
+              </div>
+            </aside>
+          </section>
+
+          <!-- Charts: supports 1–N graphs (Databricks embeds as iframes) -->
+          <section class="aa-card" aria-label="Charts">
+            <div class="aa-card-header">
+              <h2 class="aa-card-title">Trends</h2>
+            </div>
+            <div class="aa-card-body">
+              <div class="charts-grid" id="chartsGrid">
+                <!-- Replace placeholders with Databricks iframes when ready -->
+                <div class="chart-placeholder">Graph placeholder 1 (Databricks embed)</div>
+                <div class="chart-placeholder">Graph placeholder 2 (Databricks embed)</div>
+                <div class="chart-placeholder">Graph placeholder 3 (Databricks embed)</div>
+
+                <!-- Example iframe (uncomment and replace src):
+                <iframe class="chartFrame" src="PASTE_DATABRICKS_EMBED_URL"></iframe>
+                -->
+              </div>
+            </div>
+          </section>
+
+        </section>
+      </div>
+    </div>
   </main>
 
-  <!-- FOOTER -->
   <footer class="border-top mt-auto" style="background: rgba(255, 255, 255, 0.7);">
     <div class="container py-3">
       <div class="row gy-2 align-items-center small text-body-secondary">
@@ -241,7 +212,6 @@
 
   <script src="/dashboard/dashboard.js" defer></script>
 
-  <!-- Bootstrap JS bundle (for navbar toggle) -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
