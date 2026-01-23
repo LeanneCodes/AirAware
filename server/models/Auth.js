@@ -1,32 +1,35 @@
 const db = require("../db/connect");
 
-async function createUser({ email, passwordHash, conditionType, sensitivityLevel }) {
+async function createUser({ email, passwordHash }) {
   const result = await db.query(
-    `INSERT INTO users (email, password_hash, condition_type, sensitivity_level)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, email, condition_type, sensitivity_level, created_at`,
-    [email, passwordHash, conditionType, sensitivityLevel]
+    `INSERT INTO users (email, password_hash)
+     VALUES ($1, $2)
+     RETURNING id, email, created_at`,
+    [email, passwordHash]
   );
+
   return result.rows[0];
 }
 
 async function getUserByEmail(email) {
   const result = await db.query(
-    `SELECT id, email, password_hash, condition_type, sensitivity_level
+    `SELECT id, email, password_hash
      FROM users
      WHERE email = $1`,
     [email]
   );
+
   return result.rows[0] || null;
 }
 
 async function getUserById(id) {
   const result = await db.query(
-    `SELECT id, email, condition_type, sensitivity_level
+    `SELECT id, email
      FROM users
      WHERE id = $1`,
     [id]
   );
+
   return result.rows[0] || null;
 }
 
