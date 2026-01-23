@@ -430,17 +430,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const recs = payload?.recommendations || [];
 
+    // Shared header + disclaimer (always shown)
+    const header = `
+      <div class="recoTitle">General guidance (not medical advice)</div>
+      <div class="recoLine">
+        These are general suggestions based on current air quality in this area.
+      </div>
+    `;
+
     if (!recs.length) {
       els.recommendations.innerHTML = `
-        <div class="recoTitle">Recommendations</div>
-        <div class="recoLine">No recommendations available yet.</div>
+        ${header}
+        <div class="recoLine">
+          No specific recommendations are available at the moment.
+        </div>
       `;
       return;
     }
 
     // Keep only 5 to avoid overcrowding the UI
     els.recommendations.innerHTML = `
-      <div class="recoTitle">Recommendations</div>
+      ${header}
       ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
     `;
   }
