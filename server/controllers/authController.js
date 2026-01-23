@@ -19,10 +19,10 @@ function signToken(user) {
 
 async function register(req, res) {
   try {
-    const { email, password, condition_type, sensitivity_level } = req.body;
+    const { email, password,} = req.body;
 
-    if (!email || !password || !condition_type || !sensitivity_level) {
-      return res.status(400).json({ error: "email, password, condition_type, sensitivity_level are required" });
+    if (!email || !password) {
+      return res.status(400).json({ error: "email, password," });
     }
 
     if (!validator.isEmail(email)) {
@@ -31,14 +31,6 @@ async function register(req, res) {
 
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
-    }
-
-    if (!ALLOWED_CONDITIONS.has(condition_type)) {
-      return res.status(400).json({ error: "condition_type must be asthma, allergies, or both" });
-    }
-
-    if (!ALLOWED_SENSITIVITY.has(sensitivity_level)) {
-      return res.status(400).json({ error: "sensitivity_level must be low, medium, or high" });
     }
 
     const existing = await Auth.getUserByEmail(email.toLowerCase());
