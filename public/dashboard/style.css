@@ -177,7 +177,6 @@ main.dash{ flex:1; }
   display:grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  margin-top: 1rem;
 }
 @media (min-width: 1200px){
   .midRow{
