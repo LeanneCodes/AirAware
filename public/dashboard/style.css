@@ -136,18 +136,20 @@ main.dash{ flex:1; }
   }
 }
 
-.infoPill{
-  display:flex;
-  flex-wrap:wrap;
-  gap:.5rem .75rem;
-  align-items:center;
-  padding:.75rem 1rem;
-  border:1px solid var(--aa-border);
-  border-radius: 999px;
-  background: rgba(255,255,255,.9);
-  box-shadow: 0 10px 18px rgba(15,23,42,.05);
-  font-size:.95rem;
-  color: rgba(15,23,42,.80);
+.infoPill {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .75rem;
+    align-items: center;
+    padding: .75rem 1rem;
+    border: 1px solid var(--aa-border);
+    border-radius: 999px;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 10px 18px rgba(15,23,42,.05);
+    font-size: .95rem;
+    color: rgba(15,23,42,.80);
+    width: 100%;
+    justify-content: center;
 }
 .infoPill .divider{ opacity:.35; }
 
@@ -312,4 +314,59 @@ main.dash{ flex:1; }
 }
 #savedSearches::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Overall mini meter */
+.aq-meter {
+  width: 90px;
+  height: 10px;
+  border-radius: 999px;
+  background: #e9ecef;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  margin-left: 8px;
+}
+.aq-meter-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: currentColor; /* inherits from overallAQ colour */
+}
+
+/* Pollutant card status (soft outline + dot) */
+.pollCard {
+  position: relative;
+}
+.pollCard .statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+  background: #adb5bd;
+}
+.pollCard.is-good { outline: 2px solid rgba(47, 158, 68, 0.18); }
+.pollCard.is-fair { outline: 2px solid rgba(245, 159, 0, 0.18); }
+.pollCard.is-moderate { outline: 2px solid rgba(250, 176, 5, 0.18); }
+.pollCard.is-poor { outline: 2px solid rgba(224, 49, 49, 0.18); }
+.pollCard.is-verypoor { outline: 2px solid rgba(106, 4, 15, 0.18); }
+
+.pollCard.is-good .statusDot { background: #2f9e44; }
+.pollCard.is-fair .statusDot { background: #66a80f; }
+.pollCard.is-moderate .statusDot { background: #fab005; }
+.pollCard.is-poor .statusDot { background: #e03131; }
+.pollCard.is-verypoor .statusDot { background: #6a040f; }
+
+/* Dominant badge */
+.pollCard .dominantBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f3f5;
+  border: 1px solid #dee2e6;
 }

@@ -31,6 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDateTime: document.getElementById("currentDateTime"),
     overallAQ: document.getElementById("overallAQ"),
 
+    // Optional mini meter in your header (only works if you added the HTML)
+    aqiMeterFill: document.getElementById("aqMeterFill"),
+
     recommendations: document.getElementById("recommendations"),
     refreshBtn: document.getElementById("refreshBtn"),
 
@@ -221,6 +224,125 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* -----------------------------
+     3.5) Indicator helpers (overall meter + per-card subtle styling)
+  -------------------------------- */
+
+  // Convert an AQI index (1..5) into a CSS class name we can apply.
+  function statusClassFromIdx(aqiIdx) {
+    switch (aqiIdx) {
+      case 1: return "is-good";
+      case 2: return "is-fair";
+      case 3: return "is-moderate";
+      case 4: return "is-poor";
+      case 5: return "is-verypoor";
+      default: return "";
+    }
+  }
+
+  /*
+    setOverallIndicator:
+    - Colours the overallAQ text using classes (optional if your CSS uses these)
+    - Updates a small header meter (optional: only works if #aqMeterFill exists)
+  */
+  function setOverallIndicator(aqiIdx) {
+    if (!els.aqiMeterFill) return;
+
+    const config = {
+      1: { width: "20%",  colour: "#2f9e44" }, // Good
+      2: { width: "40%",  colour: "#66a80f" }, // Fair
+      3: { width: "60%",  colour: "#fab005" }, // Moderate
+      4: { width: "80%",  colour: "#e03131" }, // Poor
+      5: { width: "100%", colour: "#6a040f" }, // Very Poor
+    };
+
+    const c = config[aqiIdx];
+    if (!c) return;
+
+    els.aqiMeterFill.style.width = c.width;
+    els.aqiMeterFill.style.backgroundColor = c.colour;
+  }
+
+  /*
+    ensureStatusDotInCard:
+    Adds a small status dot inside the .pollName if it doesn't already exist.
+    This keeps the UI subtle and avoids big gauges everywhere.
+  */
+  function ensureStatusDotInCard(pollutantKey) {
+    const card = document.querySelector(`.pollCard[data-pollutant="${pollutantKey}"]`);
+    if (!card) return null;
+
+    const nameEl = card.querySelector(".pollName");
+    if (!nameEl) return card;
+
+    if (!nameEl.querySelector(".statusDot")) {
+      const dot = document.createElement("span");
+      dot.className = "statusDot";
+      dot.setAttribute("aria-hidden", "true");
+      nameEl.prepend(dot);
+    }
+
+    return card;
+  }
+
+  /*
+    setCardStatusClass:
+    Applies "is-good / is-fair / ..." class to the relevant pollutant card.
+  */
+  function setCardStatusClass(pollutantKey, aqiIdx) {
+    const card = ensureStatusDotInCard(pollutantKey);
+    if (!card) return;
+
+    card.classList.remove("is-good", "is-fair", "is-moderate", "is-poor", "is-verypoor");
+    const cls = statusClassFromIdx(aqiIdx);
+    if (cls) card.classList.add(cls);
+  }
+
+  /*
+    setDominantBadge:
+    Adds a small "Dominant" badge to whichever pollutant is dominant.
+    We remove old badges first so only one is shown.
+  */
+  function setDominantBadge(dominantKey) {
+    document.querySelectorAll(".pollCard .dominantBadge").forEach((b) => b.remove());
+    if (!dominantKey) return;
+
+    const card = document.querySelector(`.pollCard[data-pollutant="${dominantKey}"]`);
+    if (!card) return;
+
+    const badge = document.createElement("span");
+    badge.className = "dominantBadge";
+    badge.textContent = "Dominant";
+    card.appendChild(badge);
+  }
+
+  /*
+    Dominant pollutant mapping:
+    Your backend currently returns strings like "NO₂".
+    We convert those into the keys used by your HTML: pm25, pm10, so2, no2, o3, co.
+  */
+  function normaliseDominantPollutantKey(raw) {
+    if (!raw) return null;
+
+    const keyMap = {
+      "PM2.5": "pm25",
+      "PM 2.5": "pm25",
+      "PM10": "pm10",
+      "PM 10": "pm10",
+      "SO2": "so2",
+      "SO₂": "so2",
+      "NO2": "no2",
+      "NO₂": "no2",
+      "O3": "o3",
+      "O₃": "o3",
+      "CO": "co",
+    };
+
+    // Remove extra whitespace and normalise case a bit
+    const cleaned = String(raw).trim();
+    return keyMap[cleaned] || null;
+  }
+
+  /* -----------------------------
      4) Render functions (each one updates one part of the UI)
         Keep render functions "pure-ish":
         - Read from payload
@@ -239,6 +361,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const aqi = payload?.current?.aqi ?? null;
     setText(els.overallAQ, aqiName(aqi));
 
+    // Update the small overall indicator (meter + classes), if present
+    setOverallIndicator(aqi);
+
     // Risk summary line. Comes from backend "status".
     if (els.riskText) {
       const s = payload?.status;
@@ -246,6 +371,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ? `${s.risk_level} Risk | Dominant pollutant: ${s.dominant_pollutant}, based on your alert threshold`
         : "No risk assessment available yet.";
     }
+
+    // Dominant badge (only one card gets it)
+    const dominantRaw = payload?.status?.dominant_pollutant || null;
+    const dominantKey = normaliseDominantPollutantKey(dominantRaw);
+    setDominantBadge(dominantKey);
   }
 
   function renderPollutants(payload) {
@@ -257,6 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setText(value, "—");
         setText(status, "—");
       });
+
+      // Also clear any status classes from cards
+      ["pm25", "pm10", "so2", "no2", "o3", "co"].forEach((k) => setCardStatusClass(k, null));
       return;
     }
 
@@ -269,12 +402,27 @@ document.addEventListener("DOMContentLoaded", () => {
     setText(els.pollutants.co.value,   round(p.co));
 
     // 2) Convert each pollutant numeric value into a 1..5 band, then to a label
-    setText(els.pollutants.pm25.status, aqiName(pollutantIndex("pm25", p.pm25)));
-    setText(els.pollutants.pm10.status, aqiName(pollutantIndex("pm10", p.pm10)));
-    setText(els.pollutants.so2.status,  aqiName(pollutantIndex("so2",  p.so2)));
-    setText(els.pollutants.no2.status,  aqiName(pollutantIndex("no2",  p.no2)));
-    setText(els.pollutants.o3.status,   aqiName(pollutantIndex("o3",   p.o3)));
-    setText(els.pollutants.co.status,   aqiName(pollutantIndex("co",   p.co)));
+    const pm25Idx = pollutantIndex("pm25", p.pm25);
+    const pm10Idx = pollutantIndex("pm10", p.pm10);
+    const so2Idx  = pollutantIndex("so2",  p.so2);
+    const no2Idx  = pollutantIndex("no2",  p.no2);
+    const o3Idx   = pollutantIndex("o3",   p.o3);
+    const coIdx   = pollutantIndex("co",   p.co);
+
+    setText(els.pollutants.pm25.status, aqiName(pm25Idx));
+    setText(els.pollutants.pm10.status, aqiName(pm10Idx));
+    setText(els.pollutants.so2.status,  aqiName(so2Idx));
+    setText(els.pollutants.no2.status,  aqiName(no2Idx));
+    setText(els.pollutants.o3.status,   aqiName(o3Idx));
+    setText(els.pollutants.co.status,   aqiName(coIdx));
+
+    // 3) Apply subtle status styling to the cards (dot + outline)
+    setCardStatusClass("pm25", pm25Idx);
+    setCardStatusClass("pm10", pm10Idx);
+    setCardStatusClass("so2",  so2Idx);
+    setCardStatusClass("no2",  no2Idx);
+    setCardStatusClass("o3",   o3Idx);
+    setCardStatusClass("co",   coIdx);
   }
 
   function renderRecommendations(payload) {

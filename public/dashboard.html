@@ -55,7 +55,17 @@
     </div>
   </nav>
 
-  <div class="riskbar" role="status" aria-live="polite">
+  <!-- Non-medical disclaimer (visible immediately) -->
+  <div class="bg-white border-bottom">
+    <div class="container py-2">
+      <div class="d-flex gap-2 align-items-start">
+        <span class="badge rounded-pill text-bg-warning text-dark mt-1">Important</span>
+        <p class="mb-0 small text-body-secondary"> AirAware+ provides environmental awareness only and is <strong class="text-body">not a medical tool</strong>. It does not provide diagnosis or treatment advice. If you feel unwell or have symptoms, seek guidance from a qualified healthcare professional. </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="riskbar text-center" role="status" aria-live="polite">
     <span id="riskText">Moderate Risk | Dominant pollutant: NO₂, based on your alert threshold</span>
   </div>
 
@@ -99,6 +109,9 @@
               <span id="currentDateTime">Wednesday 21st January 2026 15:20</span>
               <span class="divider">|</span>
               <span>Current Air Quality: <strong id="overallAQ">Moderate</strong></span>
+              <span class="aq-meter" aria-hidden="true">
+                <span class="aq-meter-fill" id="aqMeterFill"></span>
+              </span>
             </div>
 
             <button class="refreshBtn" id="refreshBtn" type="button" aria-label="Refresh data">
