@@ -1,49 +1,46 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
-
   if (!form) {
     console.error("Login form not found");
     return;
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
+    const email = document.getElementById("email")?.value?.trim().toLowerCase() || "";
+    const password = document.getElementById("password")?.value || "";
 
     if (!email || !password) {
-      alert("Please enter both email and password.");
+      alert("Please enter your email and password.");
       return;
     }
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+      if (!res.ok) {
+        alert(data.error || `Login failed (${res.status})`);
+        return;
       }
 
-      // Store auth token
+      if (!data.token) {
+        alert("Login succeeded but no token was returned.");
+        return;
+      }
+
       localStorage.setItem("token", data.token);
 
-      // Redirect after login
-      window.location.href = "/dashboard.html";
-
-    } catch (error) {
-      console.error("Login error:", error);
-      alert(error.message);
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Something went wrong. Please try again.");
     }
   });
 });
