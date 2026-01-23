@@ -90,10 +90,157 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   }
 
+  const unknownRadio = form.querySelector('input[name="sensitivity"][value="unknown"]');
+
+  const quizSection = document.getElementById("quizSection");
+  const openQuizBtn = document.getElementById("openQuizBtn");
+  const closeQuizBtn = document.getElementById("closeQuizBtn");
+  const backToChoicesBtn = document.getElementById("backToChoicesBtn");
+
+  const calcBtn = document.getElementById("calcBtn");
+  const quizResult = document.getElementById("quizResult");
+  const resultExplain = document.getElementById("resultExplain");
+
+  const useRecommendedBtn = document.getElementById("useRecommendedBtn");
+  const useAverageNormalBtn = document.getElementById("useAverageNormalBtn");
+  const useAverageAsthmaBtn = document.getElementById("useAverageAsthmaBtn");
+
+  let recommendedUiValue = null;
+
+  function openQuiz() {
+    if (!quizSection) return;
+    quizSection.classList.add("is-open");
+    quizSection.setAttribute("aria-hidden", "false");
+    quizSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeQuiz() {
+    if (!quizSection) return;
+    quizSection.classList.remove("is-open");
+    quizSection.setAttribute("aria-hidden", "true");
+  }
+
+  function selectSensitivity(uiValue) {
+    const target = form.querySelector(`input[name="sensitivity"][value="${uiValue}"]`);
+    if (target) {
+      target.checked = true;
+      target.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
+  function getRadioNumber(name) {
+    const selected = document.querySelector(`input[name="${name}"]:checked`);
+    return selected ? Number(selected.value) : null;
+  }
+
+  function mapScoreToUiValue(score) {
+    // 0–9 score => your UI values
+    if (score <= 1) return "not-sensitive";
+    if (score <= 3) return "slight";
+    if (score <= 5) return "moderate";
+    if (score <= 7) return "sensitive";
+    return "very-sensitive";
+  }
+
+  function uiLabel(value) {
+    switch (value) {
+      case "very-sensitive": return "Very sensitive";
+      case "sensitive": return "Sensitive";
+      case "moderate": return "Moderately sensitive";
+      case "slight": return "Slightly sensitive";
+      case "not-sensitive": return "Not sensitive";
+      default: return value;
+    }
+  }
+
+  // 1) When user selects "unknown", reveal the quiz automatically
+  form.querySelectorAll('input[name="sensitivity"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (radio.value === "unknown" && radio.checked) openQuiz();
+    });
+  });
+
+  // 2) Button inside the "I don’t know" card (if you added it)
+  if (openQuizBtn) {
+    openQuizBtn.addEventListener("click", () => {
+      if (unknownRadio) unknownRadio.checked = true;
+      openQuiz();
+    });
+  }
+
+  if (closeQuizBtn) closeQuizBtn.addEventListener("click", closeQuiz);
+
+  if (backToChoicesBtn) {
+    backToChoicesBtn.addEventListener("click", () => {
+      closeQuiz();
+      const optionsTop = form.querySelector(".d-grid.gap-3.mt-3");
+      if (optionsTop) optionsTop.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  // 3) Calculate recommendation
+  if (calcBtn) {
+    calcBtn.addEventListener("click", () => {
+      const s = getRadioNumber("q_symptoms");
+      const f = getRadioNumber("q_frequency");
+      const i = getRadioNumber("q_impact");
+
+      if (s === null || f === null || i === null) {
+        alert("Please answer all 3 questions to get a recommendation.");
+        return;
+      }
+
+      const score = s + f + i;
+      recommendedUiValue = mapScoreToUiValue(score);
+
+      if (quizResult) quizResult.hidden = false;
+      if (resultExplain) {
+        resultExplain.textContent =
+          `Based on your answers, we recommend: ${uiLabel(recommendedUiValue)} (score ${score}/9). ` +
+          `You can use this recommendation or choose a default.`;
+      }
+    });
+  }
+
+  // 4) Apply recommended / defaults
+  if (useRecommendedBtn) {
+    useRecommendedBtn.addEventListener("click", () => {
+      if (!recommendedUiValue) {
+        alert("Please click “Get recommendation” first.");
+        return;
+      }
+      selectSensitivity(recommendedUiValue);
+      closeQuiz();
+    });
+  }
+
+  // Default average normal -> moderate
+  if (useAverageNormalBtn) {
+    useAverageNormalBtn.addEventListener("click", () => {
+      selectSensitivity("moderate");
+      closeQuiz();
+    });
+  }
+
+  // Default average asthma -> sensitive
+  if (useAverageAsthmaBtn) {
+    useAverageAsthmaBtn.addEventListener("click", () => {
+      selectSensitivity("sensitive");
+      closeQuiz();
+    });
+  }
+
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const uiValue = getSelectedUiValue();
+    let uiValue = getSelectedUiValue();
+    
+    if (uiValue === "unknown") {
+    selectSensitivity("moderate");
+    uiValue = getSelectedUiValue();
+  }
+
     if (!uiValue) {
       alert("Please select a sensitivity level before continuing.");
       return;

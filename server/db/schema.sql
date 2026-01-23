@@ -1,5 +1,15 @@
 BEGIN;
 
+DROP TABLE IF EXISTS
+  risk_assessment_recommendations,
+  risk_assessments,
+  recommendations,
+  air_quality_readings,
+  thresholds,
+  locations,
+  users
+CASCADE;
+
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
