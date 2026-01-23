@@ -1,39 +1,43 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
-  const submitBtn = form.querySelector("button[type='button']");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const confirmPasswordInput = document.getElementById("confirmPassword");
+  const passwordError = document.getElementById("passwordError");
 
-  if (!form || !submitBtn) {
-    console.error("Signup form or button not found");
-    return;
+  function showError(message) {
+    passwordError.textContent = message;
+    passwordError.style.display = "block";
   }
 
-  submitBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirm-password").value;
+  function clearError() {
+    passwordError.textContent = "";
+    passwordError.style.display = "none";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
 
     
     if (!email || !password || !confirmPassword) {
-      alert("All fields are required.");
-      return;
+      return showError("All fields are required.");
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters long.");
-      return;
+      return showError("Password must be at least 6 characters.");
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
+      return showError("Passwords do not match.");
     }
 
-    // These are mandatory for registration but refined later by the user
-    const condition_type = "both";
-    const sensitivity_level = "medium";
-
     try {
-      const response = await fetch("/auth/register", {
+      const res = await fetch("/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,26 +45,25 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           email,
           password,
-          condition_type,
-          sensitivity_level,
         }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
+      if (!res.ok) {
+        
+        return showError(data.error || "Registration failed.");
       }
 
       
-      // Force  thelogin
-      alert("Account created successfully. Please log in.");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      window.location.href = "/login.html";
-
-    } catch (error) {
-      console.error("Signup error:", error);
-      alert(error.message);
+      
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("SIGNUP_ERROR", err);
+      showError("Something went wrong. Please try again.");
     }
   });
-})
+});
