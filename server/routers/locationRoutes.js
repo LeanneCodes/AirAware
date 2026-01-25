@@ -8,6 +8,6 @@ locationRouter.get("/history", locationController.getLocationHistory);
 locationRouter.post("/", locationController.setLocation);
 locationRouter.patch("/", locationController.updateLocation);
 locationRouter.patch("/select", locationController.selectLocation);
-locationRouter.delete("/", locationController.deleteLocation);
+locationRouter.delete("/:id", locationController.deleteLocation);
 
 module.exports = locationRouter;

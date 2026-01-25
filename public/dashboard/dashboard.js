@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     refresh: "/api/dashboard/refresh",
     locationHistory: "/api/location/history",
     locationSelect: "/api/location/select",
-    locationDelete: "/api/location",
+    // IMPORTANT: delete is now DELETE /api/location/:id
+    locationDeleteBase: "/api/location",
   };
 
   const els = {
@@ -45,11 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   };
 
-  /*
-    OpenWeather "band" tables:
-    We convert pollutant concentration values into an index number (1..5).
-    That index is then converted into a label: Good, Fair, Moderate, Poor, Very Poor.
-  */
+  /* -----------------------------
+     Pollutant bands
+  -------------------------------- */
+
   const POLLUTANT_BANDS = {
     so2:  [
       { idx: 1, min: 0,     max: 20 },
@@ -200,11 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!els.aqiMeterFill) return;
 
     const config = {
-      1: { width: "20%",  colour: "#2f9e44" },
-      2: { width: "40%",  colour: "#66a80f" },
+      1: { width: "100%",  colour: "#2f9e44" },
+      2: { width: "80%",  colour: "#66a80f" },
       3: { width: "60%",  colour: "#fab005" },
-      4: { width: "80%",  colour: "#e03131" },
-      5: { width: "100%", colour: "#6a040f" },
+      4: { width: "40%",  colour: "#e03131" },
+      5: { width: "20%", colour: "#6a040f" },
     };
 
     const c = config[aqiIdx];
@@ -214,10 +214,6 @@ document.addEventListener("DOMContentLoaded", () => {
     els.aqiMeterFill.style.backgroundColor = c.colour;
   }
 
-  /*
-    setCardStatusClass:
-    Applies class to the card.
-  */
   function setCardStatusClass(pollutantKey, aqiIdx) {
     const card = document.querySelector(`.pollCard[data-pollutant="${pollutantKey}"]`);
     if (!card) return;
@@ -319,7 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setText(els.pollutants.o3.status,   aqiName(o3Idx));
     setText(els.pollutants.co.status,   aqiName(coIdx));
 
-    // Outline colouring only
     setCardStatusClass("pm25", pm25Idx);
     setCardStatusClass("pm10", pm10Idx);
     setCardStatusClass("so2",  so2Idx);
@@ -363,7 +358,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const lines = [];
 
-    // Current AQI vs trigger line
     if (aqi && observedAt) {
       const t = new Date(observedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       const msg =
@@ -373,7 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
       lines.push({ t, msg });
     }
 
-    // Show 5 most recent alerts from backend
     alerts.slice(0, 5).forEach((a) => {
       const t = new Date(a.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       lines.push({ t, msg: `${a.risk_level} risk: ${a.explanation}` });
@@ -398,41 +391,48 @@ document.addEventListener("DOMContentLoaded", () => {
     locationsHistory = data?.locations || [];
   }
 
+  // IMPORTANT: delete by URL param: DELETE /api/location/:id
   async function deleteSavedLocation(locationId) {
-    await apiFetch(API.locationDelete, {
-      method: "DELETE",
-      body: JSON.stringify({ locationId }),
-    });
+    await apiFetch(`${API.locationDeleteBase}/${locationId}`, { method: "DELETE" });
   }
 
   /*
     Saved searches:
-    - clicking the main button switches location
-    - clicking the remove (×) deletes it
+    - clicking the pill switches location
+    - clicking the × inside the pill deletes it
   */
   function renderSavedSearches() {
     if (!els.savedSearches) return;
 
     els.savedSearches.innerHTML = "";
 
-    // Filter out current active location
     const list = locationsHistory.filter((l) => !sameLatLon(l, activeLocation));
 
     if (!list.length) {
-      els.savedSearches.innerHTML = `<div class="aa-alert-line"><span>—</span><span>No other saved locations</span></div>`;
+      els.savedSearches.innerHTML =
+        `<div class="aa-alert-line"><span>—</span><span>No other saved locations</span></div>`;
       return;
     }
 
     list.forEach((loc) => {
-      const row = document.createElement("div");
-      row.className = "saved-row";
+      // One pill button
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = "aa-btn-ghost saved-pill";
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "aa-btn-ghost saved-main";
-      btn.textContent = loc.label;
+      const label = document.createElement("span");
+      label.className = "saved-pill-label";
+      label.textContent = loc.label;
 
-      btn.addEventListener("click", async () => {
+      // × inside the pill
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "saved-pill-remove";
+      del.textContent = "×";
+      del.setAttribute("aria-label", `Remove ${loc.label} from saved searches`);
+
+      // Select on pill click
+      pill.addEventListener("click", async () => {
         try {
           await apiFetch(API.locationSelect, {
             method: "PATCH",
@@ -445,14 +445,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "saved-remove";
-      del.setAttribute("aria-label", `Remove ${loc.label} from saved searches`);
-      del.textContent = "×";
-
+      // Delete on × click
       del.addEventListener("click", async (e) => {
-        // Prevent switching location when removing
+        e.preventDefault();
         e.stopPropagation();
 
         const ok = window.confirm(`Remove "${loc.label}" from saved searches?`);
@@ -461,19 +456,24 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           await deleteSavedLocation(loc.id);
 
-          // Update local state immediately for snappy UI
-          locationsHistory = locationsHistory.filter((x) => x.id !== loc.id);
+          // Always re-fetch from backend so we don't lie to the UI
+          await loadLocationHistory();
 
-          // Re-render list
+          // If it still exists, backend didn't delete (or deleted only one duplicate)
+          const stillExists = locationsHistory.some((x) => x.id === loc.id);
+          if (stillExists) {
+            alert("That location could not be removed. Please try again.");
+          }
+
           renderSavedSearches();
         } catch (err) {
           alert(err.message);
         }
       });
 
-      row.appendChild(btn);
-      row.appendChild(del);
-      els.savedSearches.appendChild(row);
+      pill.appendChild(label);
+      pill.appendChild(del);
+      els.savedSearches.appendChild(pill);
     });
   }
 

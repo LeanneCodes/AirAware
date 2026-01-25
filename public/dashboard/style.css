@@ -301,7 +301,6 @@ main.dash{ flex:1; }
 #savedSearches {
   max-height: 320px;
   overflow-y: auto;
-  padding-right: 6px;
 }
 
 #savedSearches::-webkit-scrollbar {
@@ -368,4 +367,43 @@ main.dash{ flex:1; }
   border-radius: 999px;
   background: #f1f3f5;
   border: 1px solid #dee2e6;
+}
+
+/* Saved search pill with internal remove (×) */
+.saved-pill{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+/* Label stays left and truncates */
+.saved-pill-label{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Small internal remove button */
+.saved-pill-remove{
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--aa-border);
+  background: rgba(255,255,255,.9);
+  color: rgba(15,23,42,.65);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.saved-pill-remove:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15,23,42,.06);
+  border-color: rgba(224,49,49,.35);
+  color: rgba(224,49,49,.95);
 }
