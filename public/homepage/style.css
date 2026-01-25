@@ -193,3 +193,26 @@ body {
   padding: .25rem .6rem;
   line-height: 1.2;
 }
+
+/* Snapshot meta line (data source) */
+.snapshot-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.35rem .5rem;
+  align-items:center;
+  justify-content:flex-end;
+  font-size:.7rem;
+  color: rgba(15,23,42,.65);
+  font-style: italic;
+}
+
+.snapshot-meta__label{
+  font-weight: 600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color: rgba(15,23,42,.60);
+}
+
+.snapshot-meta__text{
+  color: rgba(15,23,42,.72);
+}

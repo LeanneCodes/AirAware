@@ -407,3 +407,33 @@ main.dash{ flex:1; }
   border-color: rgba(224,49,49,.35);
   color: rgba(224,49,49,.95);
 }
+
+/* Header layout: title left, meta right */
+.aa-card-header--between{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Inline data source */
+.data-source-inline{
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .7rem;
+  color: rgba(15,23,42,.65);
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.data-source-label{
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(15,23,42,.55);
+}
+
+.data-source-name{
+  color: rgba(15,23,42,.75);
+}
