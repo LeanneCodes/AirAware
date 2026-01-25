@@ -242,8 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const keyMap = {
       "PM2.5": "pm25",
       "PM 2.5": "pm25",
+      "PM₂.₅": "pm25",
       "PM10": "pm10",
       "PM 10": "pm10",
+      "PM₁₀": "pm10",
       "SO2": "so2",
       "SO₂": "so2",
       "NO2": "no2",
@@ -546,3 +548,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 });
+
+// Enable Bootstrap tooltips for pollutant info icons
+if (window.bootstrap?.Tooltip) {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    new bootstrap.Tooltip(el);
+  });
+}

@@ -437,3 +437,33 @@ main.dash{ flex:1; }
 .data-source-name{
   color: rgba(15,23,42,.75);
 }
+
+/* Info icon next to pollutant name */
+.pollName{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+
+.pollInfo{
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.18);
+  background: #f1f3f5;
+  color: rgba(15,23,42,.75);
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  user-select: none;
+  flex: 0 0 auto;
+}
+
+.pollInfo:hover{
+  border-color: rgba(24,95,133,.40);
+  color: rgba(24,95,133,.95);
+}
+
