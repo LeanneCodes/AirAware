@@ -4,12 +4,9 @@
   2) Checks if the user is logged in (token in localStorage)
      - If no token, it leaves the homepage static (no API calls)
   3) If token exists, fetches dashboard data from /api/dashboard
-  4) Uses that data to fill small homepage UI widgets:
-     - Location label + "View on map" link
-     - Mini map (Leaflet) if available
-     - User sensitivity level
-     - Dominant pollutant
-     - Current pollutant values + last updated time
+  4) Uses that data to fill small homepage UI widgets
+  5) Lets the user refresh the homepage snapshot using /api/dashboard/refresh
+     - The homepage shows "refreshed time"
 */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,15 +14,16 @@ document.addEventListener("DOMContentLoaded", () => {
   initHomepage(TOKEN_KEY);
 });
 
+let lastRefreshedAt = null;
+
 /* -----------------------------
    1) Main initialiser
 -------------------------------- */
 
 async function initHomepage(tokenKey) {
-  const token = localStorage.getItem(tokenKey);
+  wireRefreshButton(tokenKey);
 
-  // No token means user is not logged in (or token expired/cleared).
-  // Homepage stays static.
+  const token = localStorage.getItem(tokenKey);
   if (!token) return;
 
   try {
@@ -33,25 +31,78 @@ async function initHomepage(tokenKey) {
     renderHomepage(payload);
   } catch (err) {
     console.error("Homepage load error:", err);
-    // Keep homepage calm: no alerts.
   }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreshHomepageSnapshot(tokenKey);
+    }
+  });
+}
+
+function wireRefreshButton(tokenKey) {
+  const refreshBtn = document.getElementById("homeRefreshBtn");
+  if (!refreshBtn) return;
+
+  refreshBtn.addEventListener("click", async () => {
+    refreshBtn.disabled = true;
+
+    const prevText = refreshBtn.textContent;
+    refreshBtn.textContent = "Refreshing…";
+
+    try {
+      await refreshHomepageSnapshot(tokenKey);
+    } catch (err) {
+      console.error("Homepage refresh error:", err);
+    } finally {
+      refreshBtn.textContent = prevText;
+      refreshBtn.disabled = false;
+    }
+  });
 }
 
 /* -----------------------------
-   2) API function (data loading only)
+   2) API functions
 -------------------------------- */
 
 async function fetchDashboard(token) {
   const res = await fetch("/api/dashboard", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!res.ok) throw new Error(`Dashboard fetch failed (${res.status})`);
   return res.json();
 }
 
+async function refreshDashboard(token) {
+  const res = await fetch("/api/dashboard/refresh", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({}),
+  });
+
+  if (!res.ok) throw new Error(`Dashboard refresh failed (${res.status})`);
+  return res.json();
+}
+
+async function refreshHomepageSnapshot(tokenKey) {
+  const token = localStorage.getItem(tokenKey);
+  if (!token) return;
+
+  const payload = await refreshDashboard(token);
+
+  lastRefreshedAt = new Date();
+
+  renderHomepage(payload);
+}
+
 /* -----------------------------
-   3) Render function (DOM updates only)
+   3) Render function
 -------------------------------- */
 
 function renderHomepage(payload) {
@@ -64,7 +115,7 @@ function renderHomepage(payload) {
 }
 
 /* -----------------------------
-   4) Helpers: formatting + bands
+   4) Helpers
 -------------------------------- */
 
 const POLLUTANT_BANDS = {
@@ -119,11 +170,11 @@ function aqiName(n) {
 
 function sensitivityLabelFromTriggerIdx(n) {
   const map = {
-    1: "Not sensitive",         // alerts later (Good or worse)
+    1: "Not sensitive",
     2: "Slightly sensitive",
     3: "Moderately sensitive",
     4: "Sensitive",
-    5: "Very sensitive",        // alerts early (even small changes)
+    5: "Very sensitive",
   };
   return map[n] || "—";
 }
@@ -139,16 +190,6 @@ function aqiClassFromIndex(n) {
   return map[n] || "";
 }
 
-function pollutantIndex(key, value) {
-  if (value === null || value === undefined) return null;
-  const n = Number(value);
-  if (Number.isNaN(n)) return null;
-  const bands = POLLUTANT_BANDS[key];
-  if (!bands) return null;
-  const band = bands.find((b) => n >= b.min && (n < b.max || b.max === Infinity));
-  return band ? band.idx : null;
-}
-
 function round(x) {
   if (x === null || x === undefined) return "—";
   const n = Number(x);
@@ -156,11 +197,13 @@ function round(x) {
   return n >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
 }
 
-function formatUpdated(ts) {
-  if (!ts) return "—";
-  const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit" });
+function formatRefreshedAt(dateObj) {
+  if (!dateObj) return "—";
+  return dateObj.toLocaleString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 function setText(id, text) {
@@ -185,8 +228,6 @@ function renderWelcomeUser(user) {
   const el = document.getElementById("welcomeUserName");
   if (!el) return;
 
-  // Adjust this depending on what your API returns.
-  // If you only have email, you can show the first part.
   const name =
     user?.name ||
     (user?.email ? String(user.email).split("@")[0] : null) ||
@@ -201,33 +242,20 @@ function renderSensitivity(user) {
 }
 
 function renderSnapshot(current, status, thresholds) {
-  // If no current data (often because no location set), keep placeholders.
   if (!current) return;
 
-  // Overall AQI label
   const aqi = current?.aqi ?? null;
   const labelEl = document.getElementById("snapshotAQLabel");
 
   if (labelEl) {
     labelEl.textContent = aqiName(aqi);
-
-    // reset old classes
-    labelEl.classList.remove(
-      "aqi-good",
-      "aqi-fair",
-      "aqi-moderate",
-      "aqi-poor",
-      "aqi-very-poor"
-    );
-
+    labelEl.classList.remove("aqi-good", "aqi-fair", "aqi-moderate", "aqi-poor", "aqi-very-poor");
     const cls = aqiClassFromIndex(aqi);
     if (cls) labelEl.classList.add(cls);
   }
 
-  // Note under the label (keep it simple + non-medical)
   const triggerIdx = thresholds?.effective_trigger_aqi ?? null;
   const triggerSensitivityLabel = sensitivityLabelFromTriggerIdx(triggerIdx);
-  const triggerAqiLabel = aqiName(triggerIdx);
 
   const note =
     triggerIdx && aqi
@@ -238,7 +266,6 @@ function renderSnapshot(current, status, thresholds) {
 
   setText("snapshotAQNote", note);
 
-  // Pollutant badges
   const p = current?.pollutants || {};
   setText("badgePm25", `PM₂.₅: ${round(p.pm25)}`);
   setText("badgePm10", `PM₁₀: ${round(p.pm10)}`);
@@ -246,9 +273,10 @@ function renderSnapshot(current, status, thresholds) {
   setText("badgeO3", `O₃: ${round(p.o3)}`);
   setText("badgeSo2", `SO₂: ${round(p.so2)}`);
   setText("badgeCo", `CO: ${round(p.co)}`);
-  setText("badgeUpdated", `Updated: ${formatUpdated(current?.observed_at)}`);
 
-  // Dominant pollutant (prefer backend if available)
+  // Show REFRESHED time only (client-side)
+  setText("badgeUpdated", `Updated: ${formatRefreshedAt(lastRefreshedAt)}`);
+
   const dominant = status?.dominant_pollutant || "—";
   setText("primaryPollutant", dominant);
   setText("primaryPollutantNote", "General awareness only (not medical advice).");
@@ -259,6 +287,7 @@ function renderSnapshot(current, status, thresholds) {
 -------------------------------- */
 
 let miniMapInstance = null;
+let miniMapMarker = null;
 
 function renderLocationSection(location) {
   const labelEl = document.getElementById("locationLabel");
@@ -267,7 +296,6 @@ function renderLocationSection(location) {
   const mapEl = document.getElementById("miniMap");
   const actionLink = document.getElementById("locationActionLink");
 
-  // First-time user: no location yet
   if (!location) {
     if (labelEl) labelEl.textContent = "Not set";
     if (noteEl) noteEl.textContent = "Choose a location to see current air quality.";
@@ -280,7 +308,6 @@ function renderLocationSection(location) {
     return;
   }
 
-  // Location set: show label + links
   if (labelEl) labelEl.textContent = location.label;
   if (noteEl) noteEl.textContent = "Current area";
 
@@ -293,10 +320,8 @@ function renderLocationSection(location) {
   }
   if (actionLink) actionLink.textContent = "Update location";
 
-  // Show map container
   if (mapEl) mapEl.style.display = "block";
 
-  // Render mini map (only if Leaflet loaded + coords valid)
   if (window.L && mapEl && !Number.isNaN(lat) && !Number.isNaN(lon)) {
     renderMiniMap(lat, lon);
   }
@@ -305,9 +330,9 @@ function renderLocationSection(location) {
 function renderMiniMap(lat, lon) {
   const containerId = "miniMap";
 
-  // If map already exists, just update its view + marker
   if (miniMapInstance) {
     miniMapInstance.setView([lat, lon], 11);
+    if (miniMapMarker) miniMapMarker.setLatLng([lat, lon]);
     return;
   }
 
@@ -326,5 +351,5 @@ function renderMiniMap(lat, lon) {
     maxZoom: 18,
   }).addTo(miniMapInstance);
 
-  L.marker([lat, lon]).addTo(miniMapInstance);
+  miniMapMarker = L.marker([lat, lon]).addTo(miniMapInstance);
 }
