@@ -1,46 +1,113 @@
 /*
-  What this file does:
-  1) Waits for the page HTML to load
-  2) Finds the login <form> and listens for submit
-  3) Reads email + password from inputs
-  4) Sends POST /api/auth/login with JSON body
-  5) If successful, stores the returned token in localStorage
-  6) Redirects the user to the homepage
+  Login behaviour:
+  - Form-level inline messages via #formFeedback
+  - Field-level inline message under password via #passwordError
+  - No alert(), no toast
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
+  const loginBtn = document.getElementById("loginBtn");
 
-  // If the form is not on the page, do nothing (but log an error for debugging).
   if (!form) {
     console.error("Login form not found");
     return;
   }
 
-  // Handle submit
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  emailInput?.addEventListener("input", clearPasswordError);
+  passwordInput?.addEventListener("input", clearPasswordError);
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    clearFormMessage();
+    clearPasswordError();
+    setSubmittingState(loginBtn, true);
+
     try {
       const credentials = readCredentials();
-
       const data = await loginRequest(credentials);
 
       storeToken(data.token);
 
-      // Using window.location.href ensures a full navigation.
-      window.location.href = "/user";
+      showFormMessage("Login successful. Redirecting…", "success");
+
+      setTimeout(() => {
+        window.location.href = "/user";
+      }, 400);
     } catch (err) {
-      // We show user-friendly messages for expected errors
-      // and log the full error for developers.
       console.error("Login error:", err);
-      alert(err.message || "Something went wrong. Please try again.");
+
+      // Auth error → field-level message only
+      if (err.message === "Incorrect email or password.") {
+        showPasswordError(err.message);
+        setSubmittingState(loginBtn, false);
+        return;
+      }
+
+      // Everything else → form-level message
+      showFormMessage(err.message || "Something went wrong. Please try again.", "danger");
+      setSubmittingState(loginBtn, false);
     }
   });
 });
 
 /* -----------------------------
-   1) Read + validate inputs
+   UI helpers
+-------------------------------- */
+
+function showFormMessage(message, type = "danger") {
+  const el = document.getElementById("formFeedback");
+  if (!el) return;
+
+  el.textContent = message;
+  el.className = `alert alert-${type}`;
+  el.classList.remove("d-none");
+}
+
+function clearFormMessage() {
+  const el = document.getElementById("formFeedback");
+  if (!el) return;
+
+  el.classList.add("d-none");
+  el.textContent = "";
+}
+
+function showPasswordError(message) {
+  const el = document.getElementById("passwordError");
+  if (!el) return;
+
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function clearPasswordError() {
+  const el = document.getElementById("passwordError");
+  if (!el) return;
+
+  el.textContent = "";
+  el.style.display = "none";
+}
+
+function setSubmittingState(buttonEl, isSubmitting) {
+  if (!buttonEl) return;
+
+  buttonEl.disabled = isSubmitting;
+  buttonEl.setAttribute("aria-busy", String(isSubmitting));
+
+  if (isSubmitting) {
+    buttonEl.dataset.originalText = buttonEl.textContent;
+    buttonEl.textContent = "Logging in…";
+  } else {
+    buttonEl.textContent = buttonEl.dataset.originalText || "Login";
+    delete buttonEl.dataset.originalText;
+  }
+}
+
+/* -----------------------------
+   Validation
 -------------------------------- */
 
 function readCredentials() {
@@ -50,7 +117,6 @@ function readCredentials() {
   const email = emailInput?.value?.trim().toLowerCase() || "";
   const password = passwordInput?.value || "";
 
-  // Basic validation: both fields must exist.
   if (!email || !password) {
     throw new Error("Please enter your email and password.");
   }
@@ -59,25 +125,32 @@ function readCredentials() {
 }
 
 /* -----------------------------
-   2) API call
+   API
 -------------------------------- */
 
 async function loginRequest({ email, password }) {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  let res;
 
-  // Server might return non-JSON on unexpected errors, so guard it.
-  const data = await res.json().catch(() => ({}));
-
-  // If status is not OK, try to show a server-provided message.
-  if (!res.ok) {
-    throw new Error(data.error || `Login failed (${res.status})`);
+  try {
+    res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch (_) {
+    throw new Error("Unable to reach the server. Please try again.");
   }
 
-  // Token is required for authenticated pages.
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    // Normalise auth failures to a single calm message
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Incorrect email or password.");
+    }
+    throw new Error(data?.error || "Unable to log in. Please try again.");
+  }
+
   if (!data.token) {
     throw new Error("Login succeeded but no token was returned.");
   }
@@ -85,12 +158,6 @@ async function loginRequest({ email, password }) {
   return data;
 }
 
-/* -----------------------------
-   3) Token storage
--------------------------------- */
-
 function storeToken(token) {
-  // Your other pages read localStorage.getItem("token"),
-  // so we store under the same key for consistency.
   localStorage.setItem("token", token);
 }

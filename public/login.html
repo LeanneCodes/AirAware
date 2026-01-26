@@ -14,7 +14,6 @@
     />
 
     <link rel="stylesheet" href="/login/login.css">
-
   </head>
 
   <body class="bg-white">
@@ -34,7 +33,14 @@
             <h1 class="h3 fw-semibold mb-2">Login</h1>
             <p class="text-body-secondary mb-4">Enter your account details</p>
 
-            <!-- IMPORTANT: remove action so JS controls submit -->
+            <!-- Form-level inline feedback (replaces alert/toast) -->
+            <div
+              id="formFeedback"
+              class="alert d-none"
+              role="alert"
+              aria-live="polite"
+            ></div>
+
             <form novalidate>
               <div class="mb-3">
                 <label for="email" class="form-label small">Email:</label>
@@ -58,9 +64,20 @@
                   required
                   autocomplete="current-password"
                 />
+                <!-- Field-level inline error (e.g. incorrect password) -->
+                <p
+                  id="passwordError"
+                  class="small text-danger mt-2"
+                  style="display: none;"
+                ></p>
               </div>
 
-              <button type="submit" class="btn btn-lg w-100" style="background-color: #185f85; color: white;">
+              <button
+                id="loginBtn"
+                type="submit"
+                class="btn btn-lg w-100"
+                style="background-color: #185f85; color: white;"
+              >
                 Login
               </button>
 

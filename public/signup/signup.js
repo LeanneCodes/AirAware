@@ -1,11 +1,8 @@
 /*
-  What this file does:
-  1) Waits for the page HTML to load
-  2) Finds the signup <form> and listens for submit
-  3) Reads email, password, and confirm password inputs
-  4) Runs basic client-side validation
-  5) Sends POST /api/auth/register to create an account
-  6) On success, shows inline success message and redirects to login
+  Signup behaviour:
+  - Form-level inline messages via #formFeedback
+  - Field-level inline message via #passwordError for password rules/mismatch
+  - No alert(), no toast
 */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,38 +14,44 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const confirmInput = document.getElementById("confirmPassword");
+
+  emailInput?.addEventListener("input", clearPasswordError);
+  passwordInput?.addEventListener("input", clearPasswordError);
+  confirmInput?.addEventListener("input", clearPasswordError);
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     clearFormMessage();
     clearPasswordError();
-
-    // Prevent double submits
     setSubmittingState(signupBtn, true);
 
     try {
       const credentials = readSignupInputs();
-
       await registerUser(credentials);
 
-      // Inline success message (no alert)
       showFormMessage("Account created successfully. Redirecting you to log in…", "success");
 
-      // Small delay so the user can see the message
       setTimeout(() => {
         window.location.href = "/login";
-      }, 1000);
+      }, 700);
     } catch (err) {
       console.error("Signup error:", err);
 
-      // Field-specific error → inline only
-      if (err.message === "Passwords do not match.") {
+      // Password-related errors → field-level message only
+      if (
+        err.message === "Password must be at least 6 characters." ||
+        err.message === "Passwords do not match."
+      ) {
         showPasswordError(err.message);
         setSubmittingState(signupBtn, false);
         return;
       }
 
-      // All other errors → form-level message
+      // Everything else → form-level message
       showFormMessage(err.message || "Something went wrong. Please try again.", "danger");
       setSubmittingState(signupBtn, false);
     }
@@ -56,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* -----------------------------
-   UI helpers (inline feedback)
+   UI helpers
 -------------------------------- */
 
 function showFormMessage(message, type = "danger") {
@@ -64,8 +67,6 @@ function showFormMessage(message, type = "danger") {
   if (!el) return;
 
   el.textContent = message;
-
-  // Bootstrap alert types: success, danger, warning, info
   el.className = `alert alert-${type}`;
   el.classList.remove("d-none");
 }
@@ -110,7 +111,7 @@ function setSubmittingState(buttonEl, isSubmitting) {
 }
 
 /* -----------------------------
-   1) Read + validate inputs
+   Validation
 -------------------------------- */
 
 function readSignupInputs() {
@@ -126,7 +127,6 @@ function readSignupInputs() {
     throw new Error("Please fill in all fields.");
   }
 
-  // Basic password rules for UX (backend enforces real rules).
   if (password.length < 6) {
     throw new Error("Password must be at least 6 characters.");
   }
@@ -139,21 +139,26 @@ function readSignupInputs() {
 }
 
 /* -----------------------------
-   2) API call
+   API
 -------------------------------- */
 
 async function registerUser({ email, password }) {
-  const res = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  let res;
 
-  // Backend might return non-JSON if something goes wrong.
+  try {
+    res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch (_) {
+    throw new Error("Unable to reach the server. Please try again.");
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || "Registration failed.");
+    throw new Error(data?.error || "Registration failed.");
   }
 
   return data;
