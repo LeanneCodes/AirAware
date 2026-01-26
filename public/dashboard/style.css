@@ -476,3 +476,40 @@ main.dash{ flex:1; }
 .aa-alert-active span:first-child {
   font-weight: 700;
 }
+
+/* Recommendations list */
+.recoList {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.recoList li {
+  margin: 6px 0;
+  line-height: 1.35;
+}
+
+/* Alert emphasis that doesn't break the design */
+.recoTitle--alert {
+  color: #b42318; /* muted red */
+}
+
+.recoList--alert li {
+  /* subtle emphasis only when alert is active */
+}
+
+.recoFoot {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--aa-border);
+}
+
+.recoSmall {
+  font-size: 0.85rem;
+  color: #6c757d; /* bootstrap-ish muted */
+  margin-top: 6px;
+}
+
+.recoTitle--alert::before {
+  content: "⚠ ";
+}
+
