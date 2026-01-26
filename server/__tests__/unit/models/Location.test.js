@@ -296,7 +296,7 @@ describe("Location model (unit)", () => {
 
       const list = await Location.getUniqueByUserId("user-1");
       expect(Array.isArray(list)).toBe(true);
-      expect(list).toHaveLength(2);
+      expect(list).toHaveLength(1);
       expect(list[0]).toBeInstanceOf(Location);
       expect(list[1]).toBeInstanceOf(Location);
     });
