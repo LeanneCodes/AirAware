@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const profileData = readProfileInputs();
       await updateProfile(profileData);
       alert("Profile updated successfully.");
+      window.location.href = "/threshold";
     } catch (err) {
       console.error("Profile update error:", err);
       alert(err.message || "Profile update failed.");

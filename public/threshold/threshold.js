@@ -291,7 +291,7 @@ const UI_TO_TRIGGER_AQI = {
 
     // Dev/no-auth mode
     if (!token) {
-      window.location.href = "/dashboard";
+      window.location.href = "/location";
       return;
     }
 
@@ -301,7 +301,7 @@ const UI_TO_TRIGGER_AQI = {
 
     try {
       await saveToApi({ apiSensitivity, token });
-      window.location.href = "/dashboard";
+      window.location.href = "/location";
     } catch (err) {
       console.error(err);
       alert("Something went wrong while saving your settings. Please try again.");
