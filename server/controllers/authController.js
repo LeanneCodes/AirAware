@@ -1,14 +1,14 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
-const Auth = require("../models/Auth");
+const Auth = require("../models/Auth.js"); 
 
 function signToken(user) {
   return jwt.sign(
     { email: user.email },
     process.env.JWT_SECRET,
     {
-      subject: user.id, // sub
+      subject: user.id,
       expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     }
   );
@@ -27,9 +27,9 @@ async function register(req, res) {
     }
 
     if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 6 characters" });
+      return res.status(400).json({
+        error: "Password must be at least 6 characters",
+      });
     }
 
     const existing = await Auth.getUserByEmail(email.toLowerCase());
@@ -42,6 +42,7 @@ async function register(req, res) {
     const user = await Auth.createUser({
       email: email.toLowerCase(),
       passwordHash,
+      // conditionType and sensitivityLevel removed
     });
 
     const token = signToken({ id: user.id, email: user.email });
@@ -54,7 +55,7 @@ async function register(req, res) {
       },
     });
   } catch (err) {
-    console.error("REGISTER_ERROR", err);
+    console.log("REGISTER_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
@@ -87,13 +88,12 @@ async function login(req, res) {
       },
     });
   } catch (err) {
-    console.error("LOGIN_ERROR", err);
+    console.log("LOGIN_ERROR", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
 
 async function me(req, res) {
-  // req.user is set by authMiddleware
   return res.json({
     user: {
       id: req.user.id,
