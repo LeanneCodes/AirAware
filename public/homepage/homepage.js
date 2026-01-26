@@ -109,7 +109,7 @@ function renderHomepage(payload) {
   const { location, user, status, current } = payload || {};
 
   renderWelcomeUser(user);
-  renderSensitivity(user);
+  renderSensitivity(user, payload?.thresholds);
   renderSnapshot(current, status, payload?.thresholds);
   renderLocationSection(location);
 }
@@ -168,16 +168,23 @@ function aqiName(n) {
   return map[n] || "—";
 }
 
+function triggerBandLabel(n) {
+  const map = { 1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Very Poor" };
+  return map[n] || "—";
+}
+
+
 function sensitivityLabelFromTriggerIdx(n) {
   const map = {
-    1: "Not sensitive",
-    2: "Slightly sensitive",
+    1: "Very sensitive",
+    2: "Sensitive",
     3: "Moderately sensitive",
-    4: "Sensitive",
-    5: "Very sensitive",
+    4: "Slightly sensitive",
+    5: "Not sensitive",
   };
   return map[n] || "—";
 }
+
 
 function aqiClassFromIndex(n) {
   const map = {
@@ -220,6 +227,28 @@ function capitaliseFirstLetter(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function uiLabelFromUiValue(v) {
+  const map = {
+    "very-sensitive": "Very sensitive",
+    "sensitive": "Sensitive",
+    "moderate": "Moderately sensitive",
+    "slight": "Slightly sensitive",
+    "not-sensitive": "Not sensitive",
+    "unknown": "Moderately sensitive",
+  };
+  return map[v] || "—";
+}
+function uiLabelFromTriggerIdx(triggerIdx) {
+  const map = {
+    2: "Very sensitive",
+    3: "Sensitive",
+    4: "Moderately sensitive",
+    5: "Not sensitive",
+  };
+  return map[triggerIdx] || "—";
+}
+
+
 /* -----------------------------
    5) Render: welcome, sensitivity, snapshot
 -------------------------------- */
@@ -236,10 +265,28 @@ function renderWelcomeUser(user) {
   el.textContent = name;
 }
 
-function renderSensitivity(user) {
+function renderSensitivity(user, thresholds) {
+  const triggerIdx = thresholds?.effective_trigger_aqi ?? null;
+  const useDefault = thresholds?.use_default !== false;
+
+  const uiValue = localStorage.getItem("sensitivity_ui");
+  if (uiValue) {
+    setText("userSensitivity", uiLabelFromUiValue(uiValue));
+    setText("userSensitivityMeta", "Personal setting");
+    return;
+  }
+
+  if (triggerIdx) {
+    setText("userSensitivity", uiLabelFromTriggerIdx(triggerIdx));
+    setText("userSensitivityMeta", useDefault ? "Default setting" : "Personal setting");
+    return;
+  }
+
   const level = user?.sensitivity_level;
   setText("userSensitivity", level ? capitaliseFirstLetter(level) : "—");
+  setText("userSensitivityMeta", "Personal setting");
 }
+
 
 function renderSnapshot(current, status, thresholds) {
   if (!current) return;
@@ -254,17 +301,37 @@ function renderSnapshot(current, status, thresholds) {
     if (cls) labelEl.classList.add(cls);
   }
 
-  const triggerIdx = thresholds?.effective_trigger_aqi ?? null;
-  const triggerSensitivityLabel = sensitivityLabelFromTriggerIdx(triggerIdx);
+const triggerIdx = thresholds?.effective_trigger_aqi ?? null;
+const triggerBand = triggerBandLabel(triggerIdx);
 
-  const note =
-    triggerIdx && aqi
-      ? aqi >= triggerIdx
-        ? `Above your alert setting (${triggerSensitivityLabel})`
-        : `Below your alert setting (${triggerSensitivityLabel})`
-      : "Based on current air quality in this area.";
+const snapshotCard = document.getElementById("snapshotCard");
+const noteEl = document.getElementById("snapshotAQNote");
 
-  setText("snapshotAQNote", note);
+let note = "Based on current air quality in this area.";
+let alertActive = false;
+
+if (triggerIdx && aqi) {
+  const triggerName = aqiName(triggerIdx);
+  const currentName = aqiName(aqi);
+
+  if (aqi >= triggerIdx) {
+    alertActive = true;
+    note = `Alert condition met based on your sensitivity setting, see the dashboard for recommended actions.`;
+  } else {
+    note = `No alert needed right now. Alerts start when air quality becomes ${triggerName} or Worse.` ;
+  }
+}
+
+/* Apply text */
+if (noteEl) {
+  noteEl.textContent = note;
+  noteEl.classList.toggle("alert-text", alertActive);
+}
+
+/* Apply card emphasis */
+if (snapshotCard) {
+  snapshotCard.classList.toggle("alert-active", alertActive);
+}
 
   const p = current?.pollutants || {};
   setText("badgePm25", `PM₂.₅: ${round(p.pm25)}`);
