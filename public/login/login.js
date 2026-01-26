@@ -28,9 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       storeToken(data.token);
 
-      // After login, send user somewhere useful.
       // Using window.location.href ensures a full navigation.
-      window.location.href = "/";
+      window.location.href = "/user";
     } catch (err) {
       // We show user-friendly messages for expected errors
       // and log the full error for developers.
