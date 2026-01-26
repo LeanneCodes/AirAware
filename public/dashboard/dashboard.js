@@ -157,6 +157,141 @@ document.addEventListener("DOMContentLoaded", () => {
     return map[n] || "Unknown";
   }
 
+  function uiLabelFromUiValue(v) {
+  const map = {
+    "very-sensitive": "Very sensitive",
+    "sensitive": "Sensitive",
+    "moderate": "Moderately sensitive",
+    "slight": "Slightly sensitive",
+    "not-sensitive": "Not sensitive",
+    "unknown": "Moderately sensitive",
+  };
+  return map[v] || "—";
+}
+
+function sensitivityLabelFromTriggerIdx(triggerIdx) {
+  const map = {
+    2: "Very sensitive",
+    3: "Sensitive",
+    4: "Moderately sensitive",
+    5: "Not sensitive",
+  };
+  return map[triggerIdx] || "Moderately sensitive";
+}
+
+function getSensitivityLabel(payload) {
+  const uiValue = localStorage.getItem("sensitivity_ui");
+  if (uiValue) return uiLabelFromUiValue(uiValue);
+
+  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
+  if (triggerIdx) return sensitivityLabelFromTriggerIdx(triggerIdx);
+
+  return "Moderately sensitive";
+}
+
+  function triggerToSensitivityLabel(triggerIdx) {
+  const map = {
+    2: "Very sensitive",
+    3: "Sensitive",
+    4: "Moderately sensitive",
+    5: "Not sensitive",
+  };
+  return map[triggerIdx] || "Moderately sensitive";
+}
+
+function dominantTip(dominantKey) {
+  switch (dominantKey) {
+    case "no2":
+    case "co":
+      return [
+        "Traffic-related pollutants can be higher near busy roads.",
+        "Choose quieter streets or green spaces, ventilate indoors outside rush hour.",
+      ];
+    case "pm25":
+    case "pm10":
+      return [
+        "Fine particles can come from smoke, dust, and traffic.",
+        "Avoid smoky areas and heavy-dust routes, check air quality again later.",
+      ];
+    case "o3":
+      return [
+        "Ozone can be higher on warm, sunny afternoons.",
+        "If possible, plan outdoor activity for morning or evening.",
+      ];
+    case "so2":
+      return [
+        "SO₂ can rise near industry or dense traffic in some areas.",
+        "Avoid lingering near strong fumes, consider a quieter route.",
+      ];
+    default:
+      return [];
+  }
+}
+
+function buildRecoList({ sensitivityLabel, alertActive, currentAqiName }) {
+  const base = {
+    "Not sensitive": alertActive
+      ? [
+          `Air quality is ${currentAqiName}. Consider reducing prolonged time near traffic.`,
+          "If exercising outdoors, choose green spaces away from busy roads.",
+        ]
+      : [
+          "Outdoor activities are generally fine.",
+          "If exercising outdoors, prefer greener routes away from main roads.",
+        ],
+
+    "Slightly sensitive": alertActive
+      ? [
+          `Air quality is ${currentAqiName}. Consider shortening outdoor activity near traffic.`,
+          "If needed, switch to an indoor option for comfort.",
+        ]
+      : [
+          "Outdoor activities are usually comfortable.",
+          "Avoid lingering near congested roads or idling vehicles.",
+        ],
+
+    "Moderately sensitive": alertActive
+      ? [
+          `Air quality is ${currentAqiName}. Reduce time outdoors, especially near busy roads.`,
+          "Consider rescheduling outdoor exercise to later in the day.",
+          "Keep windows closed during peak traffic hours if possible.",
+        ]
+      : [
+          "Plan outdoor activities away from main roads where possible.",
+          "Ventilate indoor spaces during quieter traffic periods.",
+        ],
+
+    "Sensitive": alertActive
+      ? [
+          `Air quality is ${currentAqiName}. Limit outdoor activity near busy roads.`,
+          "Prefer indoor activities where possible.",
+          "Ventilate indoors outside peak traffic hours.",
+        ]
+      : [
+          "Be mindful of prolonged outdoor activity near traffic.",
+          "Choose quieter routes and green spaces when you can.",
+        ],
+
+    "Very sensitive": alertActive
+      ? [
+          `Air quality is ${currentAqiName}. Avoid outdoor activity near roads if possible.`,
+          "Stay indoors during peak pollution times where practical.",
+          "Ventilate rooms later when outdoor levels may be lower.",
+        ]
+      : [
+          "Plan routes away from busy roads where possible.",
+          "Check air quality updates throughout the day.",
+        ],
+  };
+
+  return base[sensitivityLabel] || base["Moderately sensitive"];
+}
+
+function safeLink(url, text) {
+  return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+}
+
+
   function pollutantIndex(pollutantKey, value) {
     if (value === null || value === undefined) return null;
 
@@ -180,6 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function sameLatLon(a, b) {
     return Number(a?.latitude) === Number(b?.latitude) && Number(a?.longitude) === Number(b?.longitude);
   }
+
+
 
   /* -----------------------------
      3.5) Indicator helpers
@@ -326,29 +463,68 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderRecommendations(payload) {
-    if (!els.recommendations) return;
+  if (!els.recommendations) return;
 
-    const recs = payload?.recommendations || [];
+  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? 3;
+  const aqi = payload?.current?.aqi ?? null;
 
-    const header = `
-      <div class="recoTitle">General guidance (not medical advice)</div>
-      <div class="recoLine">These are general suggestions based on current air quality in this area.</div>
-    `;
+  const currentAqiName = aqiName(aqi);
+  const triggerAqiName = aqiName(triggerIdx);
 
-    if (!recs.length) {
-      els.recommendations.innerHTML = `
-        ${header}
-        <div class="recoLine">No specific recommendations are available at the moment.</div>
-      `;
-      return;
-    }
+  const alertActive = (aqi != null && triggerIdx != null) ? (aqi >= triggerIdx) : false;
 
-    els.recommendations.innerHTML = `
-      ${header}
-      ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
-    `;
-  }
-  
+  const sensitivityLabel = getSensitivityLabel(payload);
+
+  const dominantRaw = payload?.status?.dominant_pollutant || null;
+  const dominantKey = normaliseDominantPollutantKey(dominantRaw);
+
+  const baseTips = buildRecoList({ sensitivityLabel, alertActive, currentAqiName });
+  const domTips = dominantTip(dominantKey);
+
+  const nhsUrl = "https://www.gov.uk/government/publications/health-effects-of-air-pollution/health-advice-for-the-daily-air-quality-index-daqi";
+  const nhsLink = safeLink(nhsUrl, "DEFRA- Health advice for the Daily Air Quality Index (DAQI)");
+
+  const title = alertActive
+    ? `Alert Active`
+    : `General Guidance`;
+
+  const intro = alertActive
+    ? `Air quality is <strong>${currentAqiName}</strong>, which meets your alert setting (<strong>${triggerAqiName}</strong> or worse) for <strong>${sensitivityLabel}</strong>.`
+    : `Your setting is <strong>${sensitivityLabel}</strong>. Alerts start when air quality becomes <strong>${triggerAqiName}</strong> or worse.`;
+
+  const bullets = [...baseTips, ...domTips]
+    .slice(0, 6) 
+    .map((t) => `<li>${t}</li>`)
+    .join("");
+
+  const footer = `
+    <div class="recoFoot">
+      <div class="recoSmall">
+        <strong>Important:</strong> This section is for environmental awareness only and is <strong>not medical advice</strong>.
+        If you feel unwell or develop symptoms, seek advice from a healthcare professional.
+      </div>
+      <div class="recoSmall">
+        Source: ${nhsLink}
+      </div>
+      <div class="recoSmall">
+        In an emergency, call <strong>999</strong> (UK).
+      </div>
+    </div>
+  `;
+
+
+  els.recommendations.innerHTML = `
+    <div class="recoTitle ${alertActive ? "recoTitle--alert" : ""}">${title}</div>
+    <div class="recoLine">${intro}</div>
+
+    <ul class="recoList ${alertActive ? "recoList--alert" : ""}">
+      ${bullets}
+    </ul>
+
+    ${footer}
+  `;
+}
+
 function renderAlerts(payload) {
   if (!els.recentAlerts) return;
 
