@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
     refresh: "/api/dashboard/refresh",
     locationHistory: "/api/location/history",
     locationSelect: "/api/location/select",
+    // IMPORTANT: delete is now DELETE /api/location/:id
+    locationDeleteBase: "/api/location",
   };
 
-  // Cache (store) DOM elements we need to update often.
-  // This avoids repeatedly calling document.getElementById.
   const els = {
     riskText: document.getElementById("riskText"),
     activeSearchName: document.getElementById("activeSearchName"),
@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
     locationName: document.getElementById("locationName"),
     currentDateTime: document.getElementById("currentDateTime"),
     overallAQ: document.getElementById("overallAQ"),
+
+    aqiMeterFill: document.getElementById("aqMeterFill"),
 
     recommendations: document.getElementById("recommendations"),
     refreshBtn: document.getElementById("refreshBtn"),
@@ -44,14 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   };
 
-  /*
-    OpenWeather "band" tables:
-    We convert pollutant concentration values into an index number (1..5).
-    That index is then converted into a label: Good, Fair, Moderate, Poor, Very Poor.
+  /* -----------------------------
+     Pollutant bands
+  -------------------------------- */
 
-    Each pollutant key (pm25, pm10, etc.) maps to an array of ranges (bands).
-    If a value falls into band idx 3, it means overall rating "Moderate" for that pollutant.
-  */
   const POLLUTANT_BANDS = {
     so2:  [
       { idx: 1, min: 0,     max: 20 },
@@ -98,21 +96,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* -----------------------------
-     2) State (data we keep in memory)
+     2) State
   -------------------------------- */
 
-  // History list for saved locations (from /api/location/history)
   let locationsHistory = [];
-
-  // The currently active location (from dashboard payload)
   let activeLocation = null;
 
   /* -----------------------------
-     3) Small helper functions (keep logic simple + reusable)
+     3) Helpers
   -------------------------------- */
 
-  // Reads token from localStorage. If missing, redirect to login.
-  // Returning null makes it obvious that we cannot continue with API calls.
   function getTokenOrRedirect() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -122,12 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return token;
   }
 
-  /*
-    apiFetch:
-    - Adds auth header automatically
-    - Parses JSON response
-    - Throws a helpful error message when the response is not OK
-  */
   async function apiFetch(url, options = {}) {
     const token = getTokenOrRedirect();
     if (!token) return null;
@@ -141,24 +128,19 @@ document.addEventListener("DOMContentLoaded", () => {
       body: options.body,
     });
 
-    // Some backends might return non-JSON if there's an unexpected error.
-    // So we guard with catch and default to {}.
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      // Prefer server-provided message if available, otherwise build one.
       throw new Error(data.error || data.message || `Request failed (${res.status})`);
     }
 
     return data;
   }
 
-  // Safe text setter: only sets if element exists.
   function setText(el, text) {
     if (el) el.textContent = text;
   }
 
-  // Formats "now" in a UK-friendly format.
   function formatNowUK() {
     return new Date().toLocaleString("en-GB", {
       weekday: "long",
@@ -170,22 +152,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Converts AQI number to human-friendly label.
   function aqiName(n) {
     const map = { 1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Very Poor" };
     return map[n] || "Unknown";
   }
 
-  /*
-    pollutantIndex:
-    Given a pollutant key (e.g. "pm25") and a value (e.g. 37.2),
-    return the index 1..5 based on POLLUTANT_BANDS.
-
-    Returns null if:
-    - value is missing
-    - value is not a number
-    - pollutant key is unknown
-  */
   function pollutantIndex(pollutantKey, value) {
     if (value === null || value === undefined) return null;
 
@@ -195,19 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const bands = POLLUTANT_BANDS[pollutantKey];
     if (!bands) return null;
 
-    // Find the first band range that contains the value.
-    // Infinity band covers "anything above the top".
     const band = bands.find((b) => n >= b.min && (n < b.max || b.max === Infinity));
     return band ? band.idx : null;
   }
 
-  /*
-    round:
-    Display helper for pollutant values.
-    - If value missing => "—"
-    - If >= 100 => no decimals (easier to read)
-    - Else => 1 decimal place
-  */
   function round(x) {
     if (x === null || x === undefined) return "—";
     const n = Number(x);
@@ -215,21 +177,92 @@ document.addEventListener("DOMContentLoaded", () => {
     return n >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
   }
 
-  // Used to avoid showing the currently active location inside the "saved searches" list.
   function sameLatLon(a, b) {
     return Number(a?.latitude) === Number(b?.latitude) && Number(a?.longitude) === Number(b?.longitude);
   }
 
   /* -----------------------------
-     4) Render functions (each one updates one part of the UI)
-        Keep render functions "pure-ish":
-        - Read from payload
-        - Update DOM
-        - Avoid calling APIs inside render
+     3.5) Indicator helpers
+  -------------------------------- */
+
+  function statusClassFromIdx(aqiIdx) {
+    switch (aqiIdx) {
+      case 1: return "is-good";
+      case 2: return "is-fair";
+      case 3: return "is-moderate";
+      case 4: return "is-poor";
+      case 5: return "is-verypoor";
+      default: return "";
+    }
+  }
+
+  function setOverallIndicator(aqiIdx) {
+    if (!els.aqiMeterFill) return;
+
+    const config = {
+      1: { width: "100%",  colour: "#2f9e44" },
+      2: { width: "80%",  colour: "#66a80f" },
+      3: { width: "60%",  colour: "#fab005" },
+      4: { width: "40%",  colour: "#e03131" },
+      5: { width: "20%", colour: "#6a040f" },
+    };
+
+    const c = config[aqiIdx];
+    if (!c) return;
+
+    els.aqiMeterFill.style.width = c.width;
+    els.aqiMeterFill.style.backgroundColor = c.colour;
+  }
+
+  function setCardStatusClass(pollutantKey, aqiIdx) {
+    const card = document.querySelector(`.pollCard[data-pollutant="${pollutantKey}"]`);
+    if (!card) return;
+
+    card.classList.remove("is-good", "is-fair", "is-moderate", "is-poor", "is-verypoor");
+    const cls = statusClassFromIdx(aqiIdx);
+    if (cls) card.classList.add(cls);
+  }
+
+  function setDominantBadge(dominantKey) {
+    document.querySelectorAll(".pollCard .dominantBadge").forEach((b) => b.remove());
+    if (!dominantKey) return;
+
+    const card = document.querySelector(`.pollCard[data-pollutant="${dominantKey}"]`);
+    if (!card) return;
+
+    const badge = document.createElement("span");
+    badge.className = "dominantBadge";
+    badge.textContent = "Dominant";
+    card.appendChild(badge);
+  }
+
+  function normaliseDominantPollutantKey(raw) {
+    if (!raw) return null;
+
+    const keyMap = {
+      "PM2.5": "pm25",
+      "PM 2.5": "pm25",
+      "PM₂.₅": "pm25",
+      "PM10": "pm10",
+      "PM 10": "pm10",
+      "PM₁₀": "pm10",
+      "SO2": "so2",
+      "SO₂": "so2",
+      "NO2": "no2",
+      "NO₂": "no2",
+      "O3": "o3",
+      "O₃": "o3",
+      "CO": "co",
+    };
+
+    return keyMap[String(raw).trim()] || null;
+  }
+
+  /* -----------------------------
+     4) Render functions
   -------------------------------- */
 
   function renderHeader(payload) {
-    // Save active location so other parts can access it (like saved searches filter).
     activeLocation = payload?.location || null;
 
     const label = activeLocation?.label || "—";
@@ -238,29 +271,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const aqi = payload?.current?.aqi ?? null;
     setText(els.overallAQ, aqiName(aqi));
+    setOverallIndicator(aqi);
 
-    // Risk summary line. Comes from backend "status".
     if (els.riskText) {
       const s = payload?.status;
       els.riskText.textContent = s
         ? `${s.risk_level} Risk | Dominant pollutant: ${s.dominant_pollutant}, based on your alert threshold`
         : "No risk assessment available yet.";
     }
+
+    const dominantRaw = payload?.status?.dominant_pollutant || null;
+    setDominantBadge(normaliseDominantPollutantKey(dominantRaw));
   }
 
   function renderPollutants(payload) {
     const p = payload?.current?.pollutants;
 
-    // If pollutants are missing, reset all rows to "—"
     if (!p) {
       Object.values(els.pollutants).forEach(({ value, status }) => {
         setText(value, "—");
         setText(status, "—");
       });
+      ["pm25", "pm10", "so2", "no2", "o3", "co"].forEach((k) => setCardStatusClass(k, null));
       return;
     }
 
-    // 1) Show the numeric values
     setText(els.pollutants.pm25.value, round(p.pm25));
     setText(els.pollutants.pm10.value, round(p.pm10));
     setText(els.pollutants.so2.value,  round(p.so2));
@@ -268,13 +303,26 @@ document.addEventListener("DOMContentLoaded", () => {
     setText(els.pollutants.o3.value,   round(p.o3));
     setText(els.pollutants.co.value,   round(p.co));
 
-    // 2) Convert each pollutant numeric value into a 1..5 band, then to a label
-    setText(els.pollutants.pm25.status, aqiName(pollutantIndex("pm25", p.pm25)));
-    setText(els.pollutants.pm10.status, aqiName(pollutantIndex("pm10", p.pm10)));
-    setText(els.pollutants.so2.status,  aqiName(pollutantIndex("so2",  p.so2)));
-    setText(els.pollutants.no2.status,  aqiName(pollutantIndex("no2",  p.no2)));
-    setText(els.pollutants.o3.status,   aqiName(pollutantIndex("o3",   p.o3)));
-    setText(els.pollutants.co.status,   aqiName(pollutantIndex("co",   p.co)));
+    const pm25Idx = pollutantIndex("pm25", p.pm25);
+    const pm10Idx = pollutantIndex("pm10", p.pm10);
+    const so2Idx  = pollutantIndex("so2",  p.so2);
+    const no2Idx  = pollutantIndex("no2",  p.no2);
+    const o3Idx   = pollutantIndex("o3",   p.o3);
+    const coIdx   = pollutantIndex("co",   p.co);
+
+    setText(els.pollutants.pm25.status, aqiName(pm25Idx));
+    setText(els.pollutants.pm10.status, aqiName(pm10Idx));
+    setText(els.pollutants.so2.status,  aqiName(so2Idx));
+    setText(els.pollutants.no2.status,  aqiName(no2Idx));
+    setText(els.pollutants.o3.status,   aqiName(o3Idx));
+    setText(els.pollutants.co.status,   aqiName(coIdx));
+
+    setCardStatusClass("pm25", pm25Idx);
+    setCardStatusClass("pm10", pm10Idx);
+    setCardStatusClass("so2",  so2Idx);
+    setCardStatusClass("no2",  no2Idx);
+    setCardStatusClass("o3",   o3Idx);
+    setCardStatusClass("co",   coIdx);
   }
 
   function renderRecommendations(payload) {
@@ -282,17 +330,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const recs = payload?.recommendations || [];
 
+    const header = `
+      <div class="recoTitle">General guidance (not medical advice)</div>
+      <div class="recoLine">These are general suggestions based on current air quality in this area.</div>
+    `;
+
     if (!recs.length) {
       els.recommendations.innerHTML = `
-        <div class="recoTitle">Recommendations</div>
-        <div class="recoLine">No recommendations available yet.</div>
+        ${header}
+        <div class="recoLine">No specific recommendations are available at the moment.</div>
       `;
       return;
     }
 
-    // Keep only 5 to avoid overcrowding the UI
     els.recommendations.innerHTML = `
-      <div class="recoTitle">Recommendations</div>
+      ${header}
       ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
     `;
   }
@@ -308,18 +360,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const lines = [];
 
-    // Add a "current AQI vs trigger" line if we have enough data
     if (aqi && observedAt) {
       const t = new Date(observedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       const msg =
         aqi >= trigger
-          ? `AQI (${aqiName(aqi)}) is above your alert threshold (${trigger}).`
-          : `AQI (${aqiName(aqi)}) is below your alert threshold (${trigger}).`;
+          ? `AQI (${aqiName(aqi)}) is above your alert threshold (${aqiName(trigger)}).`
+          : `AQI (${aqiName(aqi)}) is below your alert threshold (${aqiName(trigger)}).`;
       lines.push({ t, msg });
     }
 
-    // Add up to 3 recent alert messages from the backend
-    alerts.slice(0, 3).forEach((a) => {
+    alerts.slice(0, 5).forEach((a) => {
       const t = new Date(a.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       lines.push({ t, msg: `${a.risk_level} risk: ${a.explanation}` });
     });
@@ -329,14 +379,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Render lines as simple time + message rows
     els.recentAlerts.innerHTML = lines
       .map((x) => `<div class="aa-alert-line"><span>${x.t}</span><span>— ${x.msg}</span></div>`)
       .join("");
   }
 
   /* -----------------------------
-     5) Data loading functions (API calls only)
+     5) Data loading functions
   -------------------------------- */
 
   async function loadLocationHistory() {
@@ -344,62 +393,95 @@ document.addEventListener("DOMContentLoaded", () => {
     locationsHistory = data?.locations || [];
   }
 
+  // IMPORTANT: delete by URL param: DELETE /api/location/:id
+  async function deleteSavedLocation(locationId) {
+    await apiFetch(`${API.locationDeleteBase}/${locationId}`, { method: "DELETE" });
+  }
+
   /*
-    Renders buttons for saved locations (excluding the currently active location).
-    Clicking a button:
-    1) calls PATCH /api/location/select
-    2) then reloads dashboard data
+    Saved searches:
+    - clicking the pill switches location
+    - clicking the × inside the pill deletes it
   */
   function renderSavedSearches() {
     if (!els.savedSearches) return;
 
-    // Clear old list (important when re-rendering after location switch)
     els.savedSearches.innerHTML = "";
 
-    // Filter out current active location
     const list = locationsHistory.filter((l) => !sameLatLon(l, activeLocation));
 
     if (!list.length) {
-      els.savedSearches.innerHTML = `<div class="aa-alert-line"><span>—</span><span>No other saved locations</span></div>`;
+      els.savedSearches.innerHTML =
+        `<div class="aa-alert-line"><span>—</span><span>No other saved locations</span></div>`;
       return;
     }
 
     list.forEach((loc) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "aa-btn-ghost";
-      btn.textContent = loc.label;
+      // One pill button
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = "aa-btn-ghost saved-pill";
 
-      btn.addEventListener("click", async () => {
+      const label = document.createElement("span");
+      label.className = "saved-pill-label";
+      label.textContent = loc.label;
+
+      // × inside the pill
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "saved-pill-remove";
+      del.textContent = "×";
+      del.setAttribute("aria-label", `Remove ${loc.label} from saved searches`);
+
+      // Select on pill click
+      pill.addEventListener("click", async () => {
         try {
-          // Tell backend to switch our active location
           await apiFetch(API.locationSelect, {
             method: "PATCH",
             body: JSON.stringify({ locationId: loc.id }),
           });
 
-          // After switching, refresh UI from the "real" dashboard data
           await loadDashboard();
         } catch (err) {
           alert(err.message);
         }
       });
 
-      els.savedSearches.appendChild(btn);
+      // Delete on × click
+      del.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const ok = window.confirm(`Remove "${loc.label}" from saved searches?`);
+        if (!ok) return;
+
+        try {
+          await deleteSavedLocation(loc.id);
+
+          // Always re-fetch from backend so we don't lie to the UI
+          await loadLocationHistory();
+
+          // If it still exists, backend didn't delete (or deleted only one duplicate)
+          const stillExists = locationsHistory.some((x) => x.id === loc.id);
+          if (stillExists) {
+            alert("That location could not be removed. Please try again.");
+          }
+
+          renderSavedSearches();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      pill.appendChild(label);
+      pill.appendChild(del);
+      els.savedSearches.appendChild(pill);
     });
   }
 
-  /*
-    loadDashboard:
-    - GET dashboard data
-    - If no location exists yet, send the user to the location page
-    - Render all UI pieces
-    - Load saved locations and render them
-  */
   async function loadDashboard() {
     const payload = await apiFetch(API.dashboard);
 
-    // If backend says there's no active location, user must choose one first
     if (!payload?.location) {
       window.location.replace("/location");
       return;
@@ -414,12 +496,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSavedSearches();
   }
 
-  /*
-    refreshDashboard:
-    - POST refresh endpoint (backend likely hits OpenWeather again)
-    - If backend says we need location, redirect
-    - Render all UI pieces and refresh saved searches
-  */
   async function refreshDashboard() {
     const payload = await apiFetch(API.refresh, { method: "POST" });
 
@@ -438,10 +514,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* -----------------------------
-     6) Event listeners (user interactions)
+     6) Event listeners
   -------------------------------- */
 
-  // Refresh button: disable during refresh to avoid duplicate requests
   els.refreshBtn?.addEventListener("click", async () => {
     try {
       els.refreshBtn.disabled = true;
@@ -459,7 +534,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   (async function init() {
     try {
-      // Keep the header clock updated
       if (els.currentDateTime) {
         els.currentDateTime.textContent = formatNowUK();
         setInterval(() => {
@@ -467,7 +541,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 30_000);
       }
 
-      // First load when the page opens
       await loadDashboard();
     } catch (err) {
       console.error(err);
@@ -475,3 +548,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 });
+
+// Enable Bootstrap tooltips for pollutant info icons
+if (window.bootstrap?.Tooltip) {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    new bootstrap.Tooltip(el);
+  });
+}
