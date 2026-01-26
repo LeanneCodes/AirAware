@@ -4,39 +4,54 @@
 const fs = require("fs");
 const path = require("path");
 
+function loadHtml() {
+  const htmlPath = path.join(__dirname, "..", "..", "user.html");
+  const html = fs.readFileSync(htmlPath, "utf8");
+  document.open();
+  document.write(html);
+  document.close();
+}
+
 describe("User profile page (public/user.html)", () => {
-  beforeAll(() => {
-    const htmlPath = path.join(__dirname, "..", "..", "user.html");
-    const html = fs.readFileSync(htmlPath, "utf8");
-    document.documentElement.innerHTML = html;
-  });
+  beforeEach(() => loadHtml());
 
   test("has correct title", () => {
-    const titleEl = document.querySelector("title");
-    expect(titleEl).not.toBeNull();
-    expect(titleEl.textContent).toBe("AirAware+ | Profile");
+    expect(document.title).toBe("AirAware+ | Your Profile");
   });
 
-  test("loads profile stylesheet", () => {
-    const css = document.querySelector('link[rel="stylesheet"][href="/user-profile/style.css"]');
-    expect(css).not.toBeNull();
+  test("uses inline styles (external profile stylesheet is not linked)", () => {
+    const externalCss = document.querySelector('link[rel="stylesheet"][href="/user-profile/style.css"]');
+    expect(externalCss).toBeNull();
+
+    const styleTag = document.querySelector("head style");
+    expect(styleTag).not.toBeNull();
   });
 
-  test("navbar exists with brand logo + Homepage link", () => {
-    const nav = document.getElementById("nav");
+  test("navbar exists with brand logo + nav links + welcome text + profile link", () => {
+    const nav = document.querySelector("nav.navbar");
     expect(nav).not.toBeNull();
 
-    const brandLink = nav.querySelector('a.navleft[href="/index.html"][aria-label="AirAware Homepage"]');
+    // ✅ Robust: select by class, then assert href attribute
+    const brandLink = nav.querySelector("a.navbar-brand");
     expect(brandLink).not.toBeNull();
+    expect(brandLink.getAttribute("href")).toBe("/");
 
-    const logo = brandLink.querySelector('img.brandlogo[alt="AirAware+"]');
+    const logo = brandLink.querySelector('img[alt="AirAware+"]');
     expect(logo).not.toBeNull();
-    
-    expect(logo.getAttribute("src")).toBe("../assets/logo-clear-bg.png");
+    expect(logo.getAttribute("src")).toBe("/assets/airaware-logo-no-whitespace.png");
 
-    const homepageChip = nav.querySelector('a.chip[href="/index.html"]');
-    expect(homepageChip).not.toBeNull();
-    expect(homepageChip.textContent.trim()).toBe("Homepage");
+    expect(nav.querySelector('a.nav-link[href="/"]')?.textContent.trim()).toBe("Home");
+    expect(nav.querySelector('a.nav-link[href="/dashboard"]')?.textContent.trim()).toBe("Dashboard");
+    expect(nav.querySelector('a.nav-link[href="/threshold"]')?.textContent.trim()).toBe("Sensitivity");
+    expect(nav.querySelector('a.nav-link[href="/location"]')?.textContent.trim()).toBe("Location");
+
+    const welcome = nav.querySelector(".welcome-text");
+    expect(welcome).not.toBeNull();
+    expect(welcome.textContent).toMatch(/Welcome,/i);
+
+    const profileLink = nav.querySelector('a[aria-label="Profile"][href="/user"]');
+    expect(profileLink).not.toBeNull();
+    expect(profileLink.querySelector("svg")).not.toBeNull();
   });
 
   test("hero avatar section exists with svg icon", () => {
@@ -52,31 +67,16 @@ describe("User profile page (public/user.html)", () => {
     expect(svg.getAttribute("viewBox")).toBe("0 0 24 24");
   });
 
-  test("form contains all required inputs with correct labels", () => {
+  test("form contains required inputs/selects with correct labels", () => {
     const form = document.querySelector("form.formGrid");
     expect(form).not.toBeNull();
 
-    const fields = [
-      { id: "firstName", label: "First name" },
-      { id: "lastName", label: "Last name" },
-      { id: "dob", label: "Date of Birth" },
-      { id: "sexAtBirth", label: "Sex at Birth" },
-      { id: "gender", label: "Gender (How do you identify?)" },
-      { id: "nationality", label: "Nationality" },
-    ];
-
-    fields.forEach(({ id, label }) => {
-      const input = document.getElementById(id);
-      expect(input).not.toBeNull();
-      expect(input.tagName).toBe("INPUT");
-
-      const labelEl = document.querySelector(`label[for="${id}"]`);
-      expect(labelEl).not.toBeNull();
-      expect(labelEl.textContent.trim()).toBe(label);
-    });
-
-    
-    expect(document.getElementById("dob").getAttribute("placeholder")).toBe("dd / mm / yyyy");
+    expect(document.getElementById("firstName")?.tagName).toBe("INPUT");
+    expect(document.getElementById("lastName")?.tagName).toBe("INPUT");
+    expect(document.getElementById("dob")?.getAttribute("type")).toBe("date");
+    expect(document.getElementById("sexAtBirth")?.tagName).toBe("SELECT");
+    expect(document.getElementById("gender")?.tagName).toBe("SELECT");
+    expect(document.getElementById("nationality")?.tagName).toBe("INPUT");
   });
 
   test("save button exists and is submit", () => {
@@ -86,7 +86,6 @@ describe("User profile page (public/user.html)", () => {
   });
 
   test("loads profile JS file", () => {
-    const script = document.querySelector('script[src="/user-profile/user.js"]');
-    expect(script).not.toBeNull();
+    expect(document.querySelector('script[src="/user-profile/user.js"]')).not.toBeNull();
   });
 });

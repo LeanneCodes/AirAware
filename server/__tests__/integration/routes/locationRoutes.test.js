@@ -7,7 +7,7 @@ jest.mock("../../../controllers/locationController", () => ({
   getLocationHistory: jest.fn(),
   setLocation: jest.fn(),
   updateLocation: jest.fn(),
-  validateLocation: jest.fn(),
+  selectLocation: jest.fn(),
   deleteLocation: jest.fn(),
 }));
 
@@ -90,31 +90,19 @@ describe("Integration: locationRoutes", () => {
     expect(reqArg.body).toEqual(payload);
   });
 
-  test("GET /api/location/validate calls locationController.validateLocation", async () => {
-    locationController.validateLocation.mockImplementation((req, res) => {
-      return res.status(200).json({ ok: true, route: "validateLocation" });
-    });
-
-    const app = makeApp();
-    const res = await request(app).get("/api/location/validate");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true, route: "validateLocation" });
-
-    expect(locationController.validateLocation).toHaveBeenCalledTimes(1);
-  });
-
-  test("DELETE /api/location calls locationController.deleteLocation", async () => {
+  test("DELETE /api/location/:id calls locationController.deleteLocation", async () => {
     locationController.deleteLocation.mockImplementation((req, res) => {
-      return res.status(200).json({ ok: true, route: "deleteLocation" });
+      return res.status(200).json({ ok: true, route: "deleteLocation", id: req.params.id });
     });
 
     const app = makeApp();
-    const res = await request(app).delete("/api/location");
+    const res = await request(app).delete("/api/location/123");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true, route: "deleteLocation" });
+    expect(res.body).toEqual({ ok: true, route: "deleteLocation", id: "123" });
 
     expect(locationController.deleteLocation).toHaveBeenCalledTimes(1);
+    const [reqArg] = locationController.deleteLocation.mock.calls[0];
+    expect(reqArg.params.id).toBe("123");
   });
 });
