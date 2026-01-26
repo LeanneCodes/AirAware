@@ -5,32 +5,109 @@
   3) Reads email, password, and confirm password inputs
   4) Runs basic client-side validation
   5) Sends POST /api/auth/register to create an account
-  6) On success, redirects the user to the login page
+  6) On success, shows inline success message and redirects to login
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
+  const signupBtn = document.getElementById("signupBtn");
 
-  // If the form is not found, there is nothing to initialise.
-  if (!form) return;
+  if (!form) {
+    console.error("Signup form not found");
+    return;
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    clearFormMessage();
+    clearPasswordError();
+
+    // Prevent double submits
+    setSubmittingState(signupBtn, true);
 
     try {
       const credentials = readSignupInputs();
 
       await registerUser(credentials);
 
-      // Registration succeeded, guide user to login page.
-      alert("Account created successfully. Please log in.");
-      window.location.href = "/login";
+      // Inline success message (no alert)
+      showFormMessage("Account created successfully. Redirecting you to log in…", "success");
+
+      // Small delay so the user can see the message
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
     } catch (err) {
       console.error("Signup error:", err);
-      alert(err.message || "Something went wrong. Please try again.");
+
+      // Field-specific error → inline only
+      if (err.message === "Passwords do not match.") {
+        showPasswordError(err.message);
+        setSubmittingState(signupBtn, false);
+        return;
+      }
+
+      // All other errors → form-level message
+      showFormMessage(err.message || "Something went wrong. Please try again.", "danger");
+      setSubmittingState(signupBtn, false);
     }
   });
 });
+
+/* -----------------------------
+   UI helpers (inline feedback)
+-------------------------------- */
+
+function showFormMessage(message, type = "danger") {
+  const el = document.getElementById("formFeedback");
+  if (!el) return;
+
+  el.textContent = message;
+
+  // Bootstrap alert types: success, danger, warning, info
+  el.className = `alert alert-${type}`;
+  el.classList.remove("d-none");
+}
+
+function clearFormMessage() {
+  const el = document.getElementById("formFeedback");
+  if (!el) return;
+
+  el.classList.add("d-none");
+  el.textContent = "";
+}
+
+function showPasswordError(message) {
+  const el = document.getElementById("passwordError");
+  if (!el) return;
+
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function clearPasswordError() {
+  const el = document.getElementById("passwordError");
+  if (!el) return;
+
+  el.textContent = "";
+  el.style.display = "none";
+}
+
+function setSubmittingState(buttonEl, isSubmitting) {
+  if (!buttonEl) return;
+
+  buttonEl.disabled = isSubmitting;
+  buttonEl.setAttribute("aria-busy", String(isSubmitting));
+
+  if (isSubmitting) {
+    buttonEl.dataset.originalText = buttonEl.textContent;
+    buttonEl.textContent = "Creating account…";
+  } else {
+    buttonEl.textContent = buttonEl.dataset.originalText || "Create account";
+    delete buttonEl.dataset.originalText;
+  }
+}
 
 /* -----------------------------
    1) Read + validate inputs

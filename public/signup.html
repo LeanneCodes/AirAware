@@ -14,7 +14,6 @@
     />
 
     <link rel="stylesheet" href="/signup/signup.css">
-
   </head>
 
   <body class="bg-white">
@@ -37,7 +36,14 @@
             <h1 class="h3 fw-semibold mb-2">Create an account</h1>
             <p class="text-body-secondary mb-4">Set up your AirAware+ account</p>
 
-            <!-- IMPORTANT: no action. JS handles submit -->
+            <!-- Inline feedback area (replaces alert()) -->
+            <div
+              id="formFeedback"
+              class="alert d-none"
+              role="alert"
+              aria-live="polite"
+            ></div>
+
             <form novalidate>
               <div class="mb-3">
                 <label for="email" class="form-label small">Email:</label>
@@ -77,6 +83,7 @@
                 />
               </div>
 
+              <!-- You can keep this, but we’ll control it via JS -->
               <p
                 id="passwordError"
                 class="small text-danger mt-2"
@@ -84,6 +91,7 @@
               ></p>
 
               <button
+                id="signupBtn"
                 type="submit"
                 class="btn btn-lg w-100"
                 style="background-color: #185f85; color: white;"
