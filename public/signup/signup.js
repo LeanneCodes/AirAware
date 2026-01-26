@@ -1,13 +1,15 @@
 /*
   Signup behaviour:
-  - Form-level inline messages via #formFeedback
+  - Form-level inline messages via #formFeedback (errors)
   - Field-level inline message via #passwordError for password rules/mismatch
-  - No alert(), no toast
+  - Toast used for success + redirecting (top-right under navbar)
+  - No alert()
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
   const signupBtn = document.getElementById("signupBtn");
+  const toastContainer = document.getElementById("aaToastContainer");
 
   if (!form) {
     console.error("Signup form not found");
@@ -18,9 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const passwordInput = document.getElementById("password");
   const confirmInput = document.getElementById("confirmPassword");
 
-  emailInput?.addEventListener("input", clearPasswordError);
-  passwordInput?.addEventListener("input", clearPasswordError);
-  confirmInput?.addEventListener("input", clearPasswordError);
+  emailInput?.addEventListener("input", () => {
+    clearFormMessage();
+    clearPasswordError();
+  });
+  passwordInput?.addEventListener("input", () => {
+    clearFormMessage();
+    clearPasswordError();
+  });
+  confirmInput?.addEventListener("input", () => {
+    clearFormMessage();
+    clearPasswordError();
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -33,15 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const credentials = readSignupInputs();
       await registerUser(credentials);
 
-      showFormMessage("Account created successfully. Redirecting you to log in…", "success");
+      showToast({
+        container: toastContainer,
+        variant: "success",
+        message: "Account created. Redirecting to log in…",
+        autohideMs: 2000,
+      });
 
       setTimeout(() => {
         window.location.href = "/login";
-      }, 700);
+      }, 1000);
     } catch (err) {
       console.error("Signup error:", err);
 
-      // Password-related errors → field-level message only
       if (
         err.message === "Password must be at least 6 characters." ||
         err.message === "Passwords do not match."
@@ -51,12 +66,47 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Everything else → form-level message
       showFormMessage(err.message || "Something went wrong. Please try again.", "danger");
       setSubmittingState(signupBtn, false);
     }
   });
 });
+
+/* -----------------------------
+   Toast helper (success only)
+-------------------------------- */
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showToast({ container, message, variant = "info", autohideMs = 3000 }) {
+  if (!container || !window.bootstrap?.Toast) return;
+
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+  toastEl.setAttribute("role", "status");
+  toastEl.setAttribute("aria-live", "polite");
+  toastEl.setAttribute("aria-atomic", "true");
+
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${escapeHtml(message)}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  container.appendChild(toastEl);
+
+  const toast = new window.bootstrap.Toast(toastEl, { delay: autohideMs, autohide: true });
+  toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+  toast.show();
+}
 
 /* -----------------------------
    UI helpers
