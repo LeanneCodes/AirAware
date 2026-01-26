@@ -19,6 +19,12 @@ CREATE TABLE users (
   accessibility_mode BOOLEAN NOT NULL DEFAULT FALSE,
   analytics_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
   accepted_disclaimer_at TIMESTAMP NULL,
+  first_name VARCHAR(100) NULL,
+  last_name VARCHAR(100) NULL,
+  date_of_birth DATE NULL,
+  sex_at_birth VARCHAR(20) NULL,
+  gender VARCHAR(30) NULL,
+  nationality VARCHAR(80) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
