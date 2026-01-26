@@ -13,216 +13,8 @@
     integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
     crossorigin="anonymous"
   />
-
-  <!-- original stylesheet -->
-  <!-- <link rel="stylesheet" href="/user-profile/style.css" /> -->
-  
-  <style>
-    :root { --aa-primary: #185f85; }
-
-    /* Page background */
-    body { background: #f1f6fa; }
-
-    /* Navbar */
-    .navbar .nav-link { color: var(--aa-primary); font-weight: 600; }
-    .navbar .nav-link:hover, .navbar .nav-link:focus { color: #134e6d; }
-    .navbar .nav-link.active { color: var(--aa-primary); font-weight: 700; }
-    .navbar .welcome-text { color: #111; font-weight: 300; }
-
-    .btn-outline-aa{
-      border-color: var(--aa-primary);
-      color: var(--aa-primary);
-      background: transparent;
-    }
-    .btn-outline-aa:hover,
-    .btn-outline-aa:focus{
-      background-color: var(--aa-primary);
-      border-color: var(--aa-primary);
-      color: #fff;
-    }
-
-    /* Hero banner */
-    .hero{
-      position: relative;
-      min-height: 220px;
-      background-image: url("/assets/web-bg.jpg");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      margin: 0;
-    }
-    .hero::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: linear-gradient(
-        135deg,
-        rgba(24, 95, 133, 0.55) 0%,
-        rgba(24, 95, 133, 0.25) 40%,
-        rgba(0, 0, 0, 0.25) 100%
-      );
-    }
-
-    .hero-inner{
-      position: relative;
-      z-index: 1;
-      min-height: 220px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 1.5rem;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .hero-title{
-      color: #fff;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      margin: 0;
-      text-shadow: 0 12px 28px rgba(0,0,0,0.35);
-    }
-
-    .hero-subtitle{
-      color: rgba(255,255,255,0.92);
-      max-width: 760px;
-      margin: 0;
-    }
-
-    .lineInput {
-      -webkit-appearance: none;
-      appearance: none;
-    }
-
-    @media (max-width: 767.98px){
-      .hero, .hero-inner { min-height: 180px; }
-    }
-
-    /* Avatar circle */
-    .avatarCircle{
-      width: 104px;
-      height: 104px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.16);
-      border: 1px solid rgba(255,255,255,0.35);
-      display: grid;
-      place-items: center;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 16px 26px rgba(0,0,0,0.20);
-    }
-    .avatarCircle svg{
-      width: 54px;
-      height: 54px;
-      fill: #fff;
-      opacity: 0.95;
-    }
-
-    /* Main content wrapper */
-    .content{
-      padding: 2.25rem 0 2.25rem;
-    }
-
-    .profile-section-title {
-      letter-spacing: 0.08em;
-    }
-
-    /* Form panel */
-    .formGrid{
-      max-width: 980px;
-      margin: 0 auto;
-      background: rgba(255,255,255,0.88);
-      border: 1px solid rgba(15,23,42,0.08);
-      border-radius: 18px;
-      box-shadow: 0 12px 24px rgba(15,23,42,0.06);
-      backdrop-filter: blur(8px);
-      padding: 2rem 2rem 1.75rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem 3rem;
-    }
-
-    @media (max-width: 991.98px){
-      .formGrid{
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-        padding: 1.5rem 1.25rem;
-      }
-    }
-
-    /* Field styling */
-    .field{
-      display: grid;
-      gap: .55rem;
-    }
-
-    .label{
-      font-weight: 700;
-      color: rgba(15,23,42,0.85);
-      font-size: 0.95rem;
-    }
-
-    /* Input underline style */
-    .lineInput{
-      width: 100%;
-      border: 0;
-      border-bottom: 2px solid rgba(24,95,133,0.45);
-      border-radius: 0;
-      background: transparent;
-      padding: 0.75rem 0.25rem;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-    .lineInput:focus{
-      border-bottom-color: rgba(24,95,133,0.95);
-      box-shadow: 0 6px 0 -4px rgba(24,95,133,0.25);
-    }
-
-    /* Actions area spans full width */
-    .actions{
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      margin-top: 0.75rem;
-    }
-
-    /* Primary button */
-    .btnPrimary{
-      min-width: 240px;
-      border: 0;
-      border-radius: 999px;
-      padding: 0.95rem 1.25rem;
-      font-weight: 800;
-      background: var(--aa-primary);
-      color: #fff;
-      transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
-    }
-    .btnPrimary:hover{
-      background: #134e6d;
-      box-shadow: 0 12px 22px rgba(15,23,42,0.12);
-      transform: translateY(-1px);
-    }
-    .btnPrimary:active{
-      transform: translateY(0);
-    }
-
-    /* Footer links */
-    .footer-link {
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 500;
-      color: #185f85;
-      text-decoration: none;
-      background-color: rgba(24, 95, 133, 0.08);
-      transition: background-color 0.15s ease, color 0.15s ease;
-    }
-    .footer-link:hover, .footer-link:focus {
-      background-color: rgba(24, 95, 133, 0.15);
-      color: #134e6d;
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="/user-profile/style.css">
+  <script src="/user-profile/user.js" defer></script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -291,70 +83,79 @@
 
   <!-- MAIN -->
   <main class="content container">
-  <form class="formGrid">
-    <!-- Small explanation box -->
-    <div class="field" style="grid-column: 1 / -1;">
-      <div class="text-uppercase small text-body-secondary mb-2 profile-section-title">
-        Profile details
+    <form class="formGrid">
+      <!-- Form-level inline feedback -->
+      <div
+        id="formFeedback"
+        class="alert d-none"
+        role="alert"
+        aria-live="polite"
+        style="grid-column: 1 / -1; border-left: 4px solid #185f85;"
+      ></div>
+
+      <!-- Small explanation box -->
+      <div class="field" style="grid-column: 1 / -1;">
+        <div class="text-uppercase small text-body-secondary mb-2 profile-section-title">
+          Profile details
+        </div>
+
+        <p class="mb-0 text-body-secondary">
+          These details help AirAware+ personalise what you see in the app (for example, how we present alerts and summaries).
+          You can leave optional fields blank, and you can update them at any time.
+        </p>
       </div>
 
-      <p class="mb-0 text-body-secondary">
-        These details help AirAware+ personalise what you see in the app (for example, how we present alerts and summaries).
-        You can leave optional fields blank, and you can update them at any time.
-      </p>
-    </div>
+      <div class="field">
+        <label class="label" for="firstName">First name</label>
+        <input class="lineInput" id="firstName" type="text" autocomplete="given-name" required />
+      </div>
 
-    <div class="field">
-      <label class="label" for="firstName">First name</label>
-      <input class="lineInput" id="firstName" type="text" autocomplete="given-name" required />
-    </div>
+      <div class="field">
+        <label class="label" for="lastName">Last name</label>
+        <input class="lineInput" id="lastName" type="text" autocomplete="family-name" required />
+      </div>
 
-    <div class="field">
-      <label class="label" for="lastName">Last name</label>
-      <input class="lineInput" id="lastName" type="text" autocomplete="family-name" required />
-    </div>
+      <div class="field">
+        <label class="label" for="dob">Date of birth</label>
+        <input class="lineInput" id="dob" type="date" autocomplete="bday" required />
+      </div>
 
-    <div class="field">
-      <label class="label" for="dob">Date of birth</label>
-      <input class="lineInput" id="dob" type="date" autocomplete="bday" required />
-    </div>
+      <div class="field">
+        <label class="label" for="sexAtBirth">Sex at birth (optional)</label>
+        <select class="lineInput" id="sexAtBirth">
+          <option value="">Select</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </select>
+      </div>
 
-    <div class="field">
-      <label class="label" for="sexAtBirth">Sex at birth (optional)</label>
-      <select class="lineInput" id="sexAtBirth">
-        <option value="">Select</option>
-        <option value="female">Female</option>
-        <option value="male">Male</option>
-        <option value="prefer_not_to_say">Prefer not to say</option>
-      </select>
-    </div>
+      <div class="field">
+        <label class="label" for="gender">Gender (optional)</label>
+        <select class="lineInput" id="gender">
+          <option value="">Select</option>
+          <option value="woman">Woman</option>
+          <option value="man">Man</option>
+          <option value="non_binary">Non-binary</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </select>
+      </div>
 
-    <div class="field">
-      <label class="label" for="gender">Gender (optional)</label>
-      <select class="lineInput" id="gender">
-        <option value="">Select</option>
-        <option value="woman">Woman</option>
-        <option value="man">Man</option>
-        <option value="non_binary">Non-binary</option>
-        <option value="prefer_not_to_say">Prefer not to say</option>
-      </select>
-    </div>
+      <div class="field">
+        <label class="label" for="nationality">Nationality (optional)</label>
+        <input
+          class="lineInput"
+          id="nationality"
+          type="text"
+          placeholder="e.g., British"
+          autocomplete="country-name"
+        />
+      </div>
 
-    <div class="field">
-      <label class="label" for="nationality">Nationality (optional)</label>
-      <input
-        class="lineInput"
-        id="nationality"
-        type="text"
-        placeholder="e.g., British"
-        autocomplete="country-name"
-      />
-    </div>
-
-    <div class="actions">
-      <button class="btnPrimary" type="submit">Save profile</button>
-    </div>
-  </form>
+      <div class="actions">
+        <button id="saveProfileBtn" class="btnPrimary" type="submit">Save profile</button>
+      </div>
+    </form>
   </main>
 
   <!-- FOOTER -->
@@ -384,7 +185,5 @@
     integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
     crossorigin="anonymous"
   ></script>
-
-  <script src="/user-profile/user.js"></script>
 </body>
 </html>
