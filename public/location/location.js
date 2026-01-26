@@ -1,7 +1,7 @@
 /*
   Location Settings UX upgrade:
   - No browser alert()
-  - Uses inline messaging + Bootstrap toast
+  - Uses inline messaging + Bootstrap toast (top-right under navbar)
   - Keeps behaviour: city OR postcode (not both)
   - Calls backend endpoints:
       GET /api/location
@@ -22,10 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const formFeedback = document.querySelector("#formFeedback");
   const cityError = document.querySelector("#cityError");
   const postcodeError = document.querySelector("#postcodeError");
-  const toastContainer = document.querySelector(".toast-container");
+
+  // ✅ Always target the single global container
+  const toastContainer = document.getElementById("aaToastContainer");
 
   const API_BASE = "/api/location";
   const REDIRECT_DELAY_MS = 800;
+
+  if (!form || !cityInput || !postcodeInput || !clearBtn) {
+    console.error("Location page is missing required elements.");
+    return;
+  }
 
   /* -----------------------------
      2) Small helpers
@@ -79,21 +86,32 @@ document.addEventListener("DOMContentLoaded", () => {
   function showFormMessage(message, type = "info") {
     if (!formFeedback) return;
 
-    // Bootstrap alert styles: alert-info, alert-success, alert-warning, alert-danger
-    formFeedback.className = `alert alert-${type}`;
-    formFeedback.textContent = message;
+    // Ensure it always looks like a Bootstrap alert
     formFeedback.classList.remove("d-none");
+    formFeedback.classList.remove("alert-info", "alert-success", "alert-warning", "alert-danger");
+    formFeedback.classList.add("alert", `alert-${type}`);
+    formFeedback.textContent = message;
   }
 
   function hideFormMessage() {
     if (!formFeedback) return;
     formFeedback.classList.add("d-none");
+    formFeedback.textContent = "";
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function showToast({ title = "AirAware+", message, variant = "info", autohideMs = 3500 }) {
     // variant: success | danger | warning | info
-    if (!toastContainer || !window.bootstrap) {
-      // Fallback: inline message if toast not available
+    if (!toastContainer || !window.bootstrap?.Toast) {
+      // Fallback to inline only
       showFormMessage(message, variant === "danger" ? "danger" : variant);
       return;
     }
@@ -107,10 +125,14 @@ document.addEventListener("DOMContentLoaded", () => {
     toastEl.innerHTML = `
       <div class="d-flex">
         <div class="toast-body">
-          <strong class="me-1">${escapeHtml(title)}:</strong>
-          ${escapeHtml(message)}
+          <strong class="me-1">${escapeHtml(title)}:</strong> ${escapeHtml(message)}
         </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close btn-close-white me-2 m-auto"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+        ></button>
       </div>
     `;
 
@@ -121,32 +143,20 @@ document.addEventListener("DOMContentLoaded", () => {
       autohide: true,
     });
 
-    toastEl.addEventListener("hidden.bs.toast", () => {
-      toastEl.remove();
-    });
-
+    toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
     toast.show();
   }
 
-  // tiny safety helper for toast HTML
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
   function setBusy(isBusy) {
-    const submitBtn = form?.querySelector('button[type="submit"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = isBusy;
       submitBtn.textContent = isBusy ? "Saving..." : "Save location";
     }
-    if (clearBtn) clearBtn.disabled = isBusy;
-    if (cityInput) cityInput.readOnly = isBusy;
-    if (postcodeInput) postcodeInput.readOnly = isBusy;
+
+    clearBtn.disabled = isBusy;
+    cityInput.readOnly = isBusy;
+    postcodeInput.readOnly = isBusy;
   }
 
   function syncDisableState() {
@@ -166,13 +176,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function validateAndBuildPayload() {
-    const cityRaw = cityInput.value;
-    const postRaw = postcodeInput.value;
+    const city = normaliseCity(cityInput.value);
+    const postcode = normalisePostcode(postcodeInput.value);
 
-    const city = normaliseCity(cityRaw);
-    const postcode = normalisePostcode(postRaw);
-
-    // Clear previous validation UI first
     clearInlineErrors();
 
     if (!city && !postcode) {
@@ -184,8 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (city && postcode) {
       showFormMessage("Please use only one field: city OR postcode.", "warning");
-      showFieldError("city", "Remove the city OR clear the postcode.");
-      showFieldError("postcode", "Remove the postcode OR clear the city.");
+      showFieldError("city", "Clear the city OR remove the postcode.");
+      showFieldError("postcode", "Clear the postcode OR remove the city.");
       throw new Error("Please use only one: city OR postcode.");
     }
 
@@ -223,15 +229,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await apiFetch(API_BASE);
       if (!data?.location) return;
 
-      // Inline "current location" message, not a success toast (less noisy)
+      // Inline "current location" message (less noisy than toast)
       showFormMessage(`Current saved location: ${data.location.label}`, "info");
 
-      // Clear inputs so user starts fresh
       cityInput.value = "";
       postcodeInput.value = "";
       syncDisableState();
     } catch (err) {
-      // If API uses "No saved location" as a message, ignore it quietly
       if (String(err.message).toLowerCase().includes("no saved location")) return;
 
       console.error("Load location error:", err);
@@ -271,8 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleApiError(err) {
     const msg = err?.message || "Something went wrong. Please try again.";
-
-    // Prefer inline for validation-ish messages; toast for general errors
     showFormMessage(msg, "danger");
     showToast({ variant: "danger", message: msg });
   }
@@ -297,15 +299,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const result = await saveLocation();
-
       const labelText = result.label ? `: ${result.label}` : "";
+
       showToast({
         variant: "success",
         message: `Location ${result.action}${labelText}. Redirecting to dashboard…`,
         autohideMs: 2500,
       });
 
-      // Keep a subtle inline message too (helpful if toast missed)
+      // Inline companion message (good fallback if toast is missed)
       showFormMessage(`Location ${result.action}${labelText}. Redirecting…`, "success");
 
       await sleep(REDIRECT_DELAY_MS);
@@ -323,7 +325,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await clearLocation();
-
       showToast({ variant: "success", message: "Location cleared." });
       showFormMessage("Location cleared. You can enter a new city or postcode.", "info");
     } catch (err) {
