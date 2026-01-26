@@ -29,6 +29,12 @@ async function updateById(userId, updates) {
     "accessibility_mode",
     "analytics_opt_in",
     "accepted_disclaimer_at",
+    "first_name",
+    "last_name",
+    "date_of_birth",
+    "sex_at_birth",
+    "gender",
+    "nationality",
   ]);
 
   const keys = Object.keys(updates).filter((k) => allowedFields.has(k));
@@ -48,23 +54,14 @@ async function updateById(userId, updates) {
   values.push(userId);
 
   const { rows } = await db.query(
-    `
-    UPDATE users
-    SET ${setParts.join(", ")}
-    WHERE id = $${i}
-    RETURNING
-      id,
-      email,
-      condition_type,
-      sensitivity_level,
-      accessibility_mode,
-      analytics_opt_in,
-      accepted_disclaimer_at,
-      created_at,
-      updated_at
-    `,
-    values
-  );
+  `
+  UPDATE users
+  SET ${setParts.join(", ")}
+  WHERE id = $${i}
+  RETURNING *
+  `,
+  values
+);
 
   return rows[0] || null;
 }

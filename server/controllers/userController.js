@@ -28,6 +28,12 @@ exports.updateMe = async (req, res) => {
       accessibility_mode,
       analytics_opt_in,
       accepted_disclaimer_at,
+      first_name,
+      last_name,
+      date_of_birth,
+      sex_at_birth,
+      gender,
+      nationality,
     } = req.body || {};
 
     const updates = {};
@@ -77,7 +83,29 @@ exports.updateMe = async (req, res) => {
         updates.accepted_disclaimer_at = d.toISOString();
       }
     }
+    if (first_name !== undefined) {
+    updates.first_name = first_name;
+    }
 
+    if (last_name !== undefined) {
+    updates.last_name = last_name;
+    }
+
+    if (date_of_birth !== undefined) {
+    updates.date_of_birth = date_of_birth;
+  }
+
+    if (sex_at_birth !== undefined) {
+  updates.sex_at_birth = sex_at_birth;
+  }
+
+  if (gender !== undefined) {
+  updates.gender = gender;
+  }
+
+    if (nationality !== undefined) {
+  updates.nationality = nationality;
+  }
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No valid fields provided to update" });
     }
