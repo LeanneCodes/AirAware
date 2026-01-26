@@ -46,6 +46,50 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   };
 
+    const confirmEls = {
+    modal: document.getElementById("confirmDeleteModal"),
+    text: document.getElementById("confirmDeleteText"),
+    btn: document.getElementById("confirmDeleteBtn"),
+  };
+
+  function confirmDelete(label) {
+    return new Promise((resolve) => {
+      // Fallback if Bootstrap modal not available for any reason
+      if (!window.bootstrap?.Modal || !confirmEls.modal || !confirmEls.btn) {
+        resolve(window.confirm(`Remove "${label}" from saved searches?`));
+        return;
+      }
+
+      if (confirmEls.text) {
+        confirmEls.text.textContent = `Are you sure you want to remove "${label}" from saved searches?`;
+      }
+
+      const modal = window.bootstrap.Modal.getOrCreateInstance(confirmEls.modal);
+
+      const onConfirm = () => {
+        cleanup();
+        modal.hide();
+        resolve(true);
+      };
+
+      const onHide = () => {
+        cleanup();
+        resolve(false);
+      };
+
+      function cleanup() {
+        confirmEls.btn.removeEventListener("click", onConfirm);
+        confirmEls.modal.removeEventListener("hidden.bs.modal", onHide);
+      }
+
+      confirmEls.btn.addEventListener("click", onConfirm);
+      confirmEls.modal.addEventListener("hidden.bs.modal", onHide);
+
+      modal.show();
+    });
+  }
+
+
   /* -----------------------------
      Pollutant bands
   -------------------------------- */
@@ -655,7 +699,7 @@ function renderAlerts(payload) {
         e.preventDefault();
         e.stopPropagation();
 
-        const ok = window.confirm(`Remove "${loc.label}" from saved searches?`);
+        const ok = await confirmDelete(loc.label);
         if (!ok) return;
 
         try {

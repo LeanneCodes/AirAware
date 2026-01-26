@@ -1,4 +1,3 @@
-<!-- dashboard.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -62,7 +61,8 @@
         <span class="badge rounded-pill text-bg-warning text-dark mt-1">Important</span>
         <p class="mb-0 small text-body-secondary">
           AirAware+ provides environmental awareness only and is <strong class="text-body">not a medical tool</strong>.
-          It does not provide diagnosis or treatment advice. If you feel unwell or have symptoms, seek guidance from a qualified healthcare professional.
+          It does not provide diagnosis or treatment advice. If you feel unwell or have symptoms, seek guidance from a
+          qualified healthcare professional.
         </p>
       </div>
     </div>
@@ -243,16 +243,19 @@
                     <div class="pollValue" id="coValue">—</div>
                     <div class="pollStatus" id="coStatus">—</div>
                   </article>
-                </div>
 
+                </div>
               </div>
             </div>
 
+            <!-- Recommendations -->
             <aside class="aa-card" aria-label="Recommendations">
               <div class="aa-card-header">
                 <h2 class="aa-card-title">Recommendations</h2>
               </div>
-              <div class="aa-card-body" id="recommendations">
+
+              <!-- IMPORTANT: we keep this container fixed-height + scroll -->
+              <div class="aa-card-body reco-scroll" id="recommendations" aria-label="Recommendations list">
                 <div class="recoTitle">NHS recommendations</div>
                 <div class="recoLine">xxx</div>
                 <div class="recoLine">xxx</div>
@@ -265,6 +268,11 @@
           <section class="aa-card" aria-label="Charts">
             <div class="aa-card-header">
               <h2 class="aa-card-title">Trends</h2>
+
+              <div class="data-source-inline">
+                <span class="data-source-label">Data source:</span>
+                <span class="data-source-name">OpenWeather</span>
+              </div>
             </div>
             <div class="aa-card-body">
               <div class="charts-grid" id="chartsGrid">
@@ -322,17 +330,13 @@
             Are you sure you want to remove this location from saved searches?
           </p>
           <p class="small text-body-secondary mb-0 mt-2">
-            This won’t affect your thresholds or your account — it only removes the saved search.
+            This only removes the saved search. It won’t affect your account or thresholds.
           </p>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-            Cancel
-          </button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-            Remove
-          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Remove</button>
         </div>
       </div>
     </div>
