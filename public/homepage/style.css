@@ -216,3 +216,18 @@ body {
 .snapshot-meta__text{
   color: rgba(15,23,42,.72);
 }
+
+
+.alert-active {
+  border-left: 4px solid #d92d20; /* muted red */
+  padding-left: 12px;
+}
+
+.alert-text {
+  color: #d92d20;
+  font-weight: 600;
+}
+
+.alert-text::before {
+  content: "⚠ ";
+}

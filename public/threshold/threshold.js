@@ -2,7 +2,8 @@
  * Two modes:
  * - No token: save locally and continue (lets you develop without auth fully integrated)
  * - Token present: PATCH /api/thresholds (fallback to POST on 404)
-*/
+ *
+ */
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".sensitivity-form");
@@ -13,16 +14,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * UI label -> AQI trigger index.
-   * "Alert me when AQI >= triggerAqi"
+   * Rule: "Alert me when AQI >= triggerAqi"
+   *
+   * We avoid trigger=1 for user settings because that would effectively mean
+   * "alerts even when AQI is Good", which is confusing/unhelpful.
    */
-  const UI_TO_TRIGGER_AQI = {
-    "very-sensitive": 2,
-    "sensitive": 3,
-    "moderate": 4,
-    "slight": 5,
-    "not-sensitive": 5,
-    "unknown": 3, // backend default is 3
-  };
+const UI_TO_TRIGGER_AQI = {
+  "very-sensitive": 2,
+  "sensitive": 2,
+  "moderate": 3,
+  "slight": 4,
+  "not-sensitive": 5,
+  "unknown": 3, // default to moderate
+};
+
 
   /**
    * AQI trigger index -> backend sensitivity string
@@ -35,6 +40,17 @@ document.addEventListener("DOMContentLoaded", () => {
     5: "very_poor",
   };
 
+  /**
+   * AQI trigger index -> label (for explanations)
+   */
+  const TRIGGER_AQI_TO_LABEL = {
+    1: "Good",
+    2: "Fair",
+    3: "Moderate",
+    4: "Poor",
+    5: "Very Poor",
+  };
+
   function getSelectedUiValue() {
     return form.querySelector('input[name="sensitivity"]:checked')?.value ?? null;
   }
@@ -43,7 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("sensitivity_ui", uiValue);
     localStorage.setItem("effectiveTriggerAqi", String(triggerAqi));
 
-    // helper function
     const apiSensitivity = TRIGGER_AQI_TO_API_SENSITIVITY[triggerAqi] ?? "moderate";
     localStorage.setItem("sensitivity_api_preview", apiSensitivity);
   }
@@ -90,6 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   }
 
+  /* -----------------------------
+     Quiz wiring (only if IDs exist)
+  -------------------------------- */
+
   const unknownRadio = form.querySelector('input[name="sensitivity"][value="unknown"]');
 
   const quizSection = document.getElementById("quizSection");
@@ -133,8 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return selected ? Number(selected.value) : null;
   }
 
+  // Score: 0–9
   function mapScoreToUiValue(score) {
-    // 0–9 score => your UI values
+    // Keeps it simple and consistent with the 5 choices
     if (score <= 1) return "not-sensitive";
     if (score <= 3) return "slight";
     if (score <= 5) return "moderate";
@@ -153,8 +173,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function uiToTriggerExplain(uiValue) {
+    const trigger = UI_TO_TRIGGER_AQI[uiValue] ?? 3;
+    const band = TRIGGER_AQI_TO_LABEL[trigger] ?? "Moderate";
+    return `Alerts at ${band} or worse.`;
+  }
+
   // 1) When user selects "unknown", reveal the quiz automatically
-  form.querySelectorAll('input[name="sensitivity"]').forEach(radio => {
+  form.querySelectorAll('input[name="sensitivity"]').forEach((radio) => {
     radio.addEventListener("change", () => {
       if (radio.value === "unknown" && radio.checked) openQuiz();
     });
@@ -194,9 +220,11 @@ document.addEventListener("DOMContentLoaded", () => {
       recommendedUiValue = mapScoreToUiValue(score);
 
       if (quizResult) quizResult.hidden = false;
+
       if (resultExplain) {
         resultExplain.textContent =
           `Based on your answers, we recommend: ${uiLabel(recommendedUiValue)} (score ${score}/9). ` +
+          `${uiToTriggerExplain(recommendedUiValue)} ` +
           `You can use this recommendation or choose a default.`;
       }
     });
@@ -222,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Default average asthma -> sensitive
+  // Default average asthma -> sensitive (one step earlier alerts than average)
   if (useAverageAsthmaBtn) {
     useAverageAsthmaBtn.addEventListener("click", () => {
       selectSensitivity("sensitive");
@@ -230,16 +258,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /* -----------------------------
+     Submit
+  -------------------------------- */
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     let uiValue = getSelectedUiValue();
-    
+
+    // Never save "unknown" — treat it as default moderate unless they used the quiz buttons.
     if (uiValue === "unknown") {
-    selectSensitivity("moderate");
-    uiValue = getSelectedUiValue();
-  }
+      selectSensitivity("moderate");
+      uiValue = getSelectedUiValue();
+    }
 
     if (!uiValue) {
       alert("Please select a sensitivity level before continuing.");
@@ -265,9 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Convert AQI trigger -> backend expected string
     const apiSensitivity =
-      uiValue === "unknown"
-        ? "unknown"
-        : (TRIGGER_AQI_TO_API_SENSITIVITY[triggerAqi] ?? "moderate");
+      TRIGGER_AQI_TO_API_SENSITIVITY[triggerAqi] ?? "moderate";
 
     try {
       await saveToApi({ apiSensitivity, token });
