@@ -1,8 +1,22 @@
+/*
+  Profile behaviour:
+  - Inline form feedback (#formFeedback) for errors only
+  - Toast (top-right under navbar) for success + redirecting
+  - No alert()
+*/
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".formGrid");
   const saveBtn = document.getElementById("saveProfileBtn");
+  const toastContainer = document.getElementById("aaToastContainer");
 
   if (!form) return;
+
+  // Clear error state as user types
+  form.querySelectorAll("input, select").forEach((el) => {
+    el.addEventListener("input", clearFormMessage);
+    el.addEventListener("change", clearFormMessage);
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -12,9 +26,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const profileData = readProfileInputs();
+
+      if (Object.keys(profileData).length === 0) {
+        setSubmittingState(saveBtn, false);
+        showFormMessage("Please fill in at least one field before saving.", "warning");
+        return;
+      }
+
       await updateProfile(profileData);
 
-      showFormMessage("Profile saved. Redirecting…", "success");
+      showToast({
+        container: toastContainer,
+        variant: "success",
+        message: "Profile saved. Redirecting…",
+        autohideMs: 2000,
+      });
 
       setTimeout(() => {
         window.location.href = "/threshold";
@@ -29,7 +55,43 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* -----------------------------
-   UI helpers (inline feedback)
+   Toast helper (success only)
+-------------------------------- */
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showToast({ container, message, variant = "info", autohideMs = 3000 }) {
+  if (!container || !window.bootstrap?.Toast) return;
+
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+  toastEl.setAttribute("role", "status");
+  toastEl.setAttribute("aria-live", "polite");
+  toastEl.setAttribute("aria-atomic", "true");
+
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${escapeHtml(message)}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  container.appendChild(toastEl);
+
+  const toast = new window.bootstrap.Toast(toastEl, { delay: autohideMs, autohide: true });
+  toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+  toast.show();
+}
+
+/* -----------------------------
+   UI helpers (inline feedback for errors only)
 -------------------------------- */
 
 function showFormMessage(message, type = "danger") {
@@ -96,7 +158,6 @@ function readProfileInputs() {
 async function updateProfile(profile) {
   const token = localStorage.getItem("token");
   if (!token) {
-    // This is not a form validation issue — user needs to log in again.
     throw new Error("You’re logged out. Please log in again.");
   }
 
