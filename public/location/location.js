@@ -1,13 +1,13 @@
 /*
-  Location Settings UX upgrade:
-  - No browser alert()
-  - Uses inline messaging + Bootstrap toast (top-right under navbar)
-  - Keeps behaviour: city OR postcode (not both)
-  - Calls backend endpoints:
-      GET /api/location
-      POST/PATCH /api/location
-      DELETE /api/location
-  - Redirects to /dashboard after a successful save/update
+  Location Settings UX upgrade
+
+  Notes:
+  - Toasts are used for meaningful user feedback (save/update + redirect, general failures).
+  - Clear & choose again is a UI reset. It should not show a toast.
+  - DELETE /api/location is only called if we believe a saved location exists.
+  - “API route not found” (or similar backend noise) is never shown to the user during clear.
+  - Clear button is disabled when both fields are empty.
+  - Validation does not show a toast directly; the submit handler shows a single toast.
 */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,15 +19,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const postcodeInput = document.querySelector("#postcodeInput");
   const clearBtn = document.querySelector("#clearBtn");
 
-  const formFeedback = document.querySelector("#formFeedback");
-  const cityError = document.querySelector("#cityError");
-  const postcodeError = document.querySelector("#postcodeError");
-
-  // ✅ Always target the single global container
   const toastContainer = document.getElementById("aaToastContainer");
 
   const API_BASE = "/api/location";
   const REDIRECT_DELAY_MS = 800;
+
+  // Track busy state so syncDisableState doesn't re-enable clearBtn mid-request
+  let isBusy = false;
+
+  // Track whether a saved location exists (so "Clear" doesn't hit DELETE unnecessarily)
+  let hasSavedLocation = false;
 
   if (!form || !cityInput || !postcodeInput || !clearBtn) {
     console.error("Location page is missing required elements.");
@@ -62,43 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return pc;
   }
 
-  function clearInlineErrors() {
-    cityInput.classList.remove("is-invalid");
-    postcodeInput.classList.remove("is-invalid");
-
-    if (cityError) cityError.textContent = "";
-    if (postcodeError) postcodeError.textContent = "";
-
-    hideFormMessage();
-  }
-
-  function showFieldError(field, message) {
-    if (field === "city") {
-      cityInput.classList.add("is-invalid");
-      if (cityError) cityError.textContent = message;
-    }
-    if (field === "postcode") {
-      postcodeInput.classList.add("is-invalid");
-      if (postcodeError) postcodeError.textContent = message;
-    }
-  }
-
-  function showFormMessage(message, type = "info") {
-    if (!formFeedback) return;
-
-    // Ensure it always looks like a Bootstrap alert
-    formFeedback.classList.remove("d-none");
-    formFeedback.classList.remove("alert-info", "alert-success", "alert-warning", "alert-danger");
-    formFeedback.classList.add("alert", `alert-${type}`);
-    formFeedback.textContent = message;
-  }
-
-  function hideFormMessage() {
-    if (!formFeedback) return;
-    formFeedback.classList.add("d-none");
-    formFeedback.textContent = "";
-  }
-
   function escapeHtml(str) {
     return String(str)
       .replaceAll("&", "&amp;")
@@ -109,12 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showToast({ title = "AirAware+", message, variant = "info", autohideMs = 3500 }) {
-    // variant: success | danger | warning | info
-    if (!toastContainer || !window.bootstrap?.Toast) {
-      // Fallback to inline only
-      showFormMessage(message, variant === "danger" ? "danger" : variant);
-      return;
-    }
+    if (!toastContainer || !window.bootstrap?.Toast) return;
 
     const toastEl = document.createElement("div");
     toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
@@ -147,16 +106,19 @@ document.addEventListener("DOMContentLoaded", () => {
     toast.show();
   }
 
-  function setBusy(isBusy) {
+  function setBusy(nextBusy) {
+    isBusy = nextBusy;
+
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
-      submitBtn.disabled = isBusy;
-      submitBtn.textContent = isBusy ? "Saving..." : "Save location";
+      submitBtn.disabled = nextBusy;
+      submitBtn.textContent = nextBusy ? "Saving..." : "Save location";
     }
 
-    clearBtn.disabled = isBusy;
-    cityInput.readOnly = isBusy;
-    postcodeInput.readOnly = isBusy;
+    clearBtn.disabled = nextBusy;
+
+    cityInput.readOnly = nextBusy;
+    postcodeInput.readOnly = nextBusy;
   }
 
   function syncDisableState() {
@@ -173,26 +135,30 @@ document.addEventListener("DOMContentLoaded", () => {
       cityInput.disabled = false;
       postcodeInput.disabled = false;
     }
+
+    // Disable clear button when both inputs are empty (do not override busy state)
+    if (!isBusy) {
+      clearBtn.disabled = !(city || post);
+    }
+  }
+
+  function makeValidationError(message) {
+    const err = new Error(message);
+    err.isValidation = true;
+    return err;
   }
 
   function validateAndBuildPayload() {
     const city = normaliseCity(cityInput.value);
     const postcode = normalisePostcode(postcodeInput.value);
 
-    clearInlineErrors();
-
+    // Important: do not show toasts here, only throw a validation error.
     if (!city && !postcode) {
-      showFormMessage("Please enter either a city or a postcode.", "warning");
-      showFieldError("city", "Enter a city name, or use the postcode field instead.");
-      showFieldError("postcode", "Enter a postcode, or use the city field instead.");
-      throw new Error("Please enter either a city or a postcode.");
+      throw makeValidationError("Please enter either a city or a postcode.");
     }
 
     if (city && postcode) {
-      showFormMessage("Please use only one field: city OR postcode.", "warning");
-      showFieldError("city", "Clear the city OR remove the postcode.");
-      showFieldError("postcode", "Clear the postcode OR remove the city.");
-      throw new Error("Please use only one: city OR postcode.");
+      throw makeValidationError("Please use only one field: city OR postcode.");
     }
 
     return city ? { city } : { postcode };
@@ -215,10 +181,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      throw new Error(data.error || data.message || `Request failed (${res.status})`);
+      const msg = data.error || data.message || `Request failed (${res.status})`;
+      const err = new Error(msg);
+      err.status = res.status;
+      throw err;
     }
 
     return data;
+  }
+
+  function isNotFoundError(err) {
+    const msg = String(err?.message || "").toLowerCase();
+    return (
+      err?.status === 404 ||
+      msg.includes("not found") ||
+      msg.includes("could not find") ||
+      msg.includes("unknown city") ||
+      msg.includes("invalid postcode")
+    );
   }
 
   /* -----------------------------
@@ -227,22 +207,22 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadExistingLocation() {
     try {
       const data = await apiFetch(API_BASE);
-      if (!data?.location) return;
 
-      // Inline "current location" message (less noisy than toast)
-      showFormMessage(`Current saved location: ${data.location.label}`, "info");
+      if (data?.location) {
+        hasSavedLocation = true;
+        showToast({ variant: "info", message: `Current saved location: ${data.location.label}` });
+      } else {
+        hasSavedLocation = false;
+      }
 
       cityInput.value = "";
       postcodeInput.value = "";
       syncDisableState();
     } catch (err) {
-      if (String(err.message).toLowerCase().includes("no saved location")) return;
+      const msg = String(err.message || "").toLowerCase();
+      if (msg.includes("no saved location")) return;
 
       console.error("Load location error:", err);
-      showToast({
-        variant: "warning",
-        message: "We couldn’t load your saved location just now. You can still enter a new one.",
-      });
     }
   }
 
@@ -254,12 +234,16 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
+      hasSavedLocation = true;
       return { action: "saved", label: data?.location?.label || null };
     } catch {
       const data = await apiFetch(API_BASE, {
         method: "PATCH",
         body: JSON.stringify(payload),
       });
+
+      hasSavedLocation = true;
       return { action: "updated", label: data?.location?.label || null };
     }
   }
@@ -268,33 +252,31 @@ document.addEventListener("DOMContentLoaded", () => {
     cityInput.value = "";
     postcodeInput.value = "";
     syncDisableState();
-    clearInlineErrors();
 
-    await apiFetch(API_BASE, { method: "DELETE" });
-  }
+    if (!hasSavedLocation) return;
 
-  function handleApiError(err) {
-    const msg = err?.message || "Something went wrong. Please try again.";
-    showFormMessage(msg, "danger");
-    showToast({ variant: "danger", message: msg });
+    try {
+      await apiFetch(API_BASE, { method: "DELETE" });
+      hasSavedLocation = false;
+    } catch (err) {
+      console.warn("Clear location API call failed (suppressed):", err?.message);
+      hasSavedLocation = false;
+    }
   }
 
   /* -----------------------------
      4) Events
   -------------------------------- */
   cityInput.addEventListener("input", () => {
-    clearInlineErrors();
     syncDisableState();
   });
 
   postcodeInput.addEventListener("input", () => {
-    clearInlineErrors();
     syncDisableState();
   });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    clearInlineErrors();
     setBusy(true);
 
     try {
@@ -303,34 +285,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
       showToast({
         variant: "success",
-        message: `Location ${result.action}${labelText}. Redirecting to dashboard…`,
-        autohideMs: 2500,
+        message: `Location ${result.action}${labelText}. Redirecting…`,
+        autohideMs: 2200,
       });
-
-      // Inline companion message (good fallback if toast is missed)
-      showFormMessage(`Location ${result.action}${labelText}. Redirecting…`, "success");
 
       await sleep(REDIRECT_DELAY_MS);
       window.location.replace("/dashboard");
     } catch (err) {
-      handleApiError(err);
+      console.error(err);
+
+      if (err?.isValidation) {
+        showToast({
+          variant: "warning",
+          message: err.message || "Please check your inputs and try again.",
+          autohideMs: 3500,
+        });
+      } else if (isNotFoundError(err)) {
+        showToast({
+          variant: "warning",
+          message: err.message || "We couldn’t find that location. Please check and try again.",
+          autohideMs: 4500,
+        });
+      } else {
+        showToast({
+          variant: "danger",
+          message: err.message || "Something went wrong. Please try again.",
+          autohideMs: 4500,
+        });
+      }
+
       setBusy(false);
+      syncDisableState();
     }
   });
 
   clearBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    clearInlineErrors();
-    setBusy(true);
+    if (clearBtn.disabled) return;
 
+    setBusy(true);
     try {
       await clearLocation();
-      showToast({ variant: "success", message: "Location cleared." });
-      showFormMessage("Location cleared. You can enter a new city or postcode.", "info");
-    } catch (err) {
-      handleApiError(err);
     } finally {
       setBusy(false);
+      syncDisableState();
     }
   });
 
