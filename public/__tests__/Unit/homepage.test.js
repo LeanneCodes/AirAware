@@ -4,17 +4,22 @@
 const fs = require("fs");
 const path = require("path");
 
+function loadHtml() {
+  const htmlPath = path.join(__dirname, "..", "..", "index.html");
+  const html = fs.readFileSync(htmlPath, "utf8");
+
+  document.open();
+  document.write(html);
+  document.close();
+}
+
 describe("Homepage (public/index.html)", () => {
-  beforeAll(() => {
-    const htmlPath = path.join(__dirname, "..", "..", "index.html");
-    const html = fs.readFileSync(htmlPath, "utf8");
-    document.documentElement.innerHTML = html;
+  beforeEach(() => {
+    loadHtml();
   });
 
   test("has correct title", () => {
-    const titleEl = document.querySelector("title");
-    expect(titleEl).not.toBeNull();
-    expect(titleEl.textContent).toBe("AirAware+ | Homepage");
+    expect(document.title).toBe("AirAware+ | Home");
   });
 
   test("loads homepage stylesheet", () => {
@@ -22,60 +27,142 @@ describe("Homepage (public/index.html)", () => {
     expect(css).not.toBeNull();
   });
 
-  test("navbar shows brand logo + welcome chip + profile link", () => {
-    const nav = document.querySelector("nav.nav");
+  test("loads Leaflet stylesheet", () => {
+    const leafletCss = document.querySelector(
+      'link[rel="stylesheet"][href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"]'
+    );
+    expect(leafletCss).not.toBeNull();
+  });
+
+  test("navbar shows brand logo + welcome text + profile link", () => {
+    const nav = document.querySelector("nav.navbar");
     expect(nav).not.toBeNull();
 
-    const logo = nav.querySelector('img.brandlogo[alt="AirAware+"]');
+    // Brand link + logo
+    const brandLink = nav.querySelector('a.navbar-brand[aria-label="AirAware+ Home"][href="/"]');
+    expect(brandLink).not.toBeNull();
+
+    const logo = nav.querySelector('a.navbar-brand img[alt="AirAware+"]');
     expect(logo).not.toBeNull();
-    expect(logo.getAttribute("src")).toBe("/assets/logo-clear-bg.png");
+    expect(logo.getAttribute("src")).toBe("/assets/airaware-logo-no-whitespace.png");
 
-    const welcome = nav.querySelector(".navright a.chip");
-    expect(welcome).not.toBeNull();
-    expect(welcome.textContent).toMatch(/Welcome/i);
+    // Welcome text + username span
+    const welcomeText = nav.querySelector(".welcome-text");
+    expect(welcomeText).not.toBeNull();
+    expect(welcomeText.textContent).toMatch(/Welcome,/i);
 
-    const profile = nav.querySelector('a.profile[href="/user.html"][aria-label="Profile"]');
-    expect(profile).not.toBeNull();
-    expect(profile.querySelector("svg")).not.toBeNull();
+    const welcomeUserName = nav.querySelector("#welcomeUserName");
+    expect(welcomeUserName).not.toBeNull();
+
+    // Profile button (link)
+    const profileLink = nav.querySelector('a[aria-label="Profile"][href="/user"]');
+    expect(profileLink).not.toBeNull();
+    expect(profileLink.querySelector("svg")).not.toBeNull();
   });
 
-  test("hero section contains headline and subtitle", () => {
-    const hero = document.querySelector("section.hero");
+  test("navbar has expected nav links", () => {
+    // Home (active)
+    expect(document.querySelector('a.nav-link.active[href="/"]')?.textContent.trim()).toBe("Home");
+    expect(document.querySelector('a.nav-link[href="/dashboard"]')?.textContent.trim()).toBe("Dashboard");
+    expect(document.querySelector('a.nav-link[href="/threshold"]')?.textContent.trim()).toBe("Sensitivity");
+    expect(document.querySelector('a.nav-link[href="/location"]')?.textContent.trim()).toBe("Location");
+  });
+
+  test("disclaimer exists and is non-medical", () => {
+    const disclaimer = document.querySelector(".bg-white.border-bottom p");
+    expect(disclaimer).not.toBeNull();
+    expect(disclaimer.textContent).toMatch(/not a medical tool/i);
+  });
+
+  test("hero section contains headline and description", () => {
+    const hero = document.querySelector("section.hero-surface");
     expect(hero).not.toBeNull();
 
-    const title = hero.querySelector("h1.heroTitle");
-    expect(title).not.toBeNull();
-    expect(title.textContent).toMatch(/How does today’s air affect/i);
+    const headline = hero.querySelector("h1");
+    expect(headline).not.toBeNull();
+    expect(headline.textContent).toMatch(/How does today’s air affect/i);
 
-    const subtitle = hero.querySelector("p.heroSubtitle");
-    expect(subtitle).not.toBeNull();
-    expect(subtitle.textContent).toMatch(/helps you understand air quality/i);
+    const description = hero.querySelector("p.text-body-secondary");
+    expect(description).not.toBeNull();
+    expect(description.textContent).toMatch(/AirAware\+ helps you understand air quality/i);
   });
 
-  test("has 3 navigation tiles with correct labels and hrefs", () => {
-    const tiles = [...document.querySelectorAll("section.tiles a.tile")];
-    expect(tiles).toHaveLength(3);
+  test("hero call-to-action buttons exist with correct hrefs", () => {
+    const dashboardCta = document.querySelector('a.btn.btn-aa.btn-lg[href="/dashboard"]');
+    expect(dashboardCta).not.toBeNull();
+    expect(dashboardCta.textContent).toMatch(/View dashboard/i);
 
-    const expected = [
-      { href: "/dashboard.html", label: "Air Quality Dashboard" },
-      { href: "/threshold.html", label: "My Sensitivity Level" },
-      { href: "/location.html", label: "Location Settings" },
-    ];
+    const sensitivityCta = document.querySelector('a.btn.btn-outline-aa.btn-lg[href="/threshold"]');
+    expect(sensitivityCta).not.toBeNull();
+    expect(sensitivityCta.textContent).toMatch(/Check sensitivity/i);
+  });
 
-    expected.forEach(({ href, label }) => {
-      const tile = document.querySelector(`a.tile[href="${href}"]`);
-      expect(tile).not.toBeNull();
-      expect(tile.textContent).toMatch(label);
+  test("snapshot card exists with key IDs", () => {
+    expect(document.getElementById("snapshotAQLabel")).not.toBeNull();
+    expect(document.getElementById("snapshotAQNote")).not.toBeNull();
+
+    // Badges
+    ["badgePm25", "badgePm10", "badgeNo2", "badgeO3", "badgeSo2", "badgeCo", "badgeUpdated"].forEach((id) => {
+      expect(document.getElementById(id)).not.toBeNull();
     });
+
+    // Refresh button
+    const refreshBtn = document.getElementById("homeRefreshBtn");
+    expect(refreshBtn).not.toBeNull();
+    expect(refreshBtn.tagName).toBe("BUTTON");
+    expect(refreshBtn.getAttribute("aria-label")).toBe("Refresh today’s snapshot");
+
+    // Primary pollutant + sensitivity
+    expect(document.getElementById("primaryPollutant")).not.toBeNull();
+    expect(document.getElementById("primaryPollutantNote")).not.toBeNull();
+    expect(document.getElementById("userSensitivity")).not.toBeNull();
+
+    // Location section
+    expect(document.getElementById("locationLabel")).not.toBeNull();
+    expect(document.getElementById("locationNote")).not.toBeNull();
+    expect(document.getElementById("locationActionLink")).not.toBeNull();
+    expect(document.getElementById("viewOnMap")).not.toBeNull();
+
+    // Mini map container exists, even if it is hidden
+    const miniMap = document.getElementById("miniMap");
+    expect(miniMap).not.toBeNull();
+    expect(miniMap.getAttribute("aria-label")).toBe("Map showing current location");
   });
 
-  test("loads bootstrap bundle script with defer + homepage JS", () => {
+  test("pollutant explainer accordion exists with 6 items", () => {
+    const accordion = document.getElementById("pollutantsAccordion");
+    expect(accordion).not.toBeNull();
+
+    const items = [...accordion.querySelectorAll(".accordion-item")];
+    expect(items).toHaveLength(6);
+
+    // Spot-check one known header/button
+    const pm25Btn = document.querySelector('#headingPm25 button[data-bs-target="#collapsePm25"]');
+    expect(pm25Btn).not.toBeNull();
+    expect(pm25Btn.textContent).toMatch(/PM₂\.₅/i);
+  });
+
+  test("footer exists with privacy/terms/accessibility links", () => {
+    expect(document.querySelector('a.footer-link[href="/privacy"]')).not.toBeNull();
+    expect(document.querySelector('a.footer-link[href="/terms"]')).not.toBeNull();
+    expect(document.querySelector('a.footer-link[href="/accessibility"]')).not.toBeNull();
+
+    expect(document.querySelector("footer")?.textContent).toMatch(/©\s*2026\s*AirAware\+/i);
+  });
+
+  test("loads scripts: bootstrap bundle, leaflet, homepage.js", () => {
+    // Bootstrap: present
     const bootstrap = document.querySelector(
       'script[src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"]'
     );
     expect(bootstrap).not.toBeNull();
-    expect(bootstrap.hasAttribute("defer")).toBe(true);
 
+    // Leaflet: has defer
+    const leaflet = document.querySelector('script[src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"]');
+    expect(leaflet).not.toBeNull();
+    expect(leaflet.hasAttribute("defer")).toBe(true);
+
+    // Homepage logic
     const homeJs = document.querySelector('script[src="/homepage/homepage.js"]');
     expect(homeJs).not.toBeNull();
   });
