@@ -16,7 +16,8 @@ const dashboardRoutes = require("../../../routers/dashboardRoutes");
 function makeApp() {
   const app = express();
   app.use(express.json());
-  app.use("/dashboard", dashboardRoutes);
+
+  app.use("/api/dashboard", authMiddleware, dashboardRoutes);
 
   app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message || "Server error" });
@@ -24,6 +25,7 @@ function makeApp() {
 
   return app;
 }
+
 
 describe("Integration: dashboardRoutes", () => {
   beforeEach(() => {
@@ -49,7 +51,7 @@ describe("Integration: dashboardRoutes", () => {
 
     const app = makeApp();
 
-    const res = await request(app).get("/dashboard");
+const res = await request(app).get("/api/dashboard");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -82,9 +84,10 @@ describe("Integration: dashboardRoutes", () => {
 
     const app = makeApp();
 
-    const res = await request(app)
-      .post("/dashboard/refresh")
-      .send({ force: true });
+const res = await request(app)
+  .post("/api/dashboard/refresh")
+  .send({ force: true });
+
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({

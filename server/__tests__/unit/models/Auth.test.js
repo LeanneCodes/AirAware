@@ -3,7 +3,7 @@ jest.mock("../../../db/connect", () => ({
 }));
 
 const db = require("../../../db/connect");
-const Auth = require("../../../models/Auth");
+const Auth = require("../../../models/Auth.js"); // note .js
 
 describe("Auth model", () => {
   beforeEach(() => {
@@ -13,11 +13,9 @@ describe("Auth model", () => {
   describe("createUser", () => {
     it("inserts a user and returns the created row", async () => {
       const mockRow = {
-        id: 1,
+        id: "11111111-1111-1111-1111-111111111111",
         email: "test@example.com",
-        condition_type: "asthma",
-        sensitivity_level: "high",
-        created_at: "2026-01-21T00:00:00.000Z",
+        created_at: "2026-01-26T00:00:00.000Z",
       };
 
       db.query.mockResolvedValueOnce({ rows: [mockRow] });
@@ -25,8 +23,6 @@ describe("Auth model", () => {
       const input = {
         email: "test@example.com",
         passwordHash: "hashed_pw",
-        conditionType: "asthma",
-        sensitivityLevel: "high",
       };
 
       const result = await Auth.createUser(input);
@@ -36,15 +32,12 @@ describe("Auth model", () => {
       const [sql, params] = db.query.mock.calls[0];
 
       expect(sql).toEqual(expect.stringContaining("INSERT INTO users"));
+      expect(sql).toEqual(expect.stringContaining("email"));
       expect(sql).toEqual(expect.stringContaining("password_hash"));
+      expect(sql).toEqual(expect.stringContaining("VALUES ($1, $2)"));
       expect(sql).toEqual(expect.stringContaining("RETURNING"));
-      expect(params).toEqual([
-        input.email,
-        input.passwordHash,
-        input.conditionType,
-        input.sensitivityLevel,
-      ]);
 
+      expect(params).toEqual([input.email, input.passwordHash]);
       expect(result).toEqual(mockRow);
     });
   });
@@ -52,11 +45,9 @@ describe("Auth model", () => {
   describe("getUserByEmail", () => {
     it("returns a user row when found", async () => {
       const mockRow = {
-        id: 2,
+        id: "22222222-2222-2222-2222-222222222222",
         email: "found@example.com",
         password_hash: "hash",
-        condition_type: "eczema",
-        sensitivity_level: "medium",
       };
 
       db.query.mockResolvedValueOnce({ rows: [mockRow] });
@@ -87,23 +78,21 @@ describe("Auth model", () => {
   describe("getUserById", () => {
     it("returns a user row when found", async () => {
       const mockRow = {
-        id: 3,
+        id: "33333333-3333-3333-3333-333333333333",
         email: "idfound@example.com",
-        condition_type: "asthma",
-        sensitivity_level: "low",
       };
 
       db.query.mockResolvedValueOnce({ rows: [mockRow] });
 
-      const result = await Auth.getUserById(3);
+      const result = await Auth.getUserById("33333333-3333-3333-3333-333333333333");
 
       expect(db.query).toHaveBeenCalledTimes(1);
 
       const [sql, params] = db.query.mock.calls[0];
-      expect(sql).toEqual(expect.stringContaining("SELECT id, email, condition_type"));
+      expect(sql).toEqual(expect.stringContaining("SELECT id, email"));
       expect(sql).toEqual(expect.stringContaining("FROM users"));
       expect(sql).toEqual(expect.stringContaining("WHERE id = $1"));
-      expect(params).toEqual([3]);
+      expect(params).toEqual(["33333333-3333-3333-3333-333333333333"]);
 
       expect(result).toEqual(mockRow);
     });
@@ -111,7 +100,7 @@ describe("Auth model", () => {
     it("returns null when no user is found", async () => {
       db.query.mockResolvedValueOnce({ rows: [] });
 
-      const result = await Auth.getUserById(999);
+      const result = await Auth.getUserById("99999999-9999-9999-9999-999999999999");
 
       expect(db.query).toHaveBeenCalledTimes(1);
       expect(result).toBeNull();

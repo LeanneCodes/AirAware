@@ -7,7 +7,6 @@ async function createUser({ email, passwordHash }) {
      RETURNING id, email, created_at`,
     [email, passwordHash]
   );
-
   return result.rows[0];
 }
 
@@ -18,7 +17,6 @@ async function getUserByEmail(email) {
      WHERE email = $1`,
     [email]
   );
-
   return result.rows[0] || null;
 }
 
@@ -29,7 +27,6 @@ async function getUserById(id) {
      WHERE id = $1`,
     [id]
   );
-
   return result.rows[0] || null;
 }
 
