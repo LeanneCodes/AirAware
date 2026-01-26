@@ -1,13 +1,15 @@
 /*
   Login behaviour:
-  - Form-level inline messages via #formFeedback
-  - Field-level inline message under password via #passwordError
-  - No alert(), no toast
+  - Form-level inline messages via #formFeedback (errors)
+  - Field-level inline message under password via #passwordError (auth failures)
+  - Toast used for success + redirect (top-right under navbar)
+  - No alert()
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
   const loginBtn = document.getElementById("loginBtn");
+  const toastContainer = document.getElementById("aaToastContainer");
 
   if (!form) {
     console.error("Login form not found");
@@ -16,8 +18,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
-  emailInput?.addEventListener("input", clearPasswordError);
-  passwordInput?.addEventListener("input", clearPasswordError);
+
+  emailInput?.addEventListener("input", () => {
+    clearFormMessage();
+    clearPasswordError();
+  });
+
+  passwordInput?.addEventListener("input", () => {
+    clearFormMessage();
+    clearPasswordError();
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -32,27 +42,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
       storeToken(data.token);
 
-      showFormMessage("Login successful. Redirecting…", "success");
+      showToast({
+        container: toastContainer,
+        variant: "success",
+        message: "Login successful. Redirecting…",
+        autohideMs: 1800,
+      });
 
       setTimeout(() => {
         window.location.href = "/user";
-      }, 400);
+      }, 2000);
     } catch (err) {
       console.error("Login error:", err);
 
-      // Auth error → field-level message only
       if (err.message === "Incorrect email or password.") {
         showPasswordError(err.message);
         setSubmittingState(loginBtn, false);
         return;
       }
 
-      // Everything else → form-level message
       showFormMessage(err.message || "Something went wrong. Please try again.", "danger");
       setSubmittingState(loginBtn, false);
     }
   });
 });
+
+/* -----------------------------
+   Toast helper (success only)
+-------------------------------- */
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showToast({ container, message, variant = "info", autohideMs = 3000 }) {
+  if (!container || !window.bootstrap?.Toast) return;
+
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+  toastEl.setAttribute("role", "status");
+  toastEl.setAttribute("aria-live", "polite");
+  toastEl.setAttribute("aria-atomic", "true");
+
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${escapeHtml(message)}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  container.appendChild(toastEl);
+
+  const toast = new window.bootstrap.Toast(toastEl, { delay: autohideMs, autohide: true });
+  toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+  toast.show();
+}
 
 /* -----------------------------
    UI helpers
@@ -144,7 +193,6 @@ async function loginRequest({ email, password }) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    // Normalise auth failures to a single calm message
     if (res.status === 401 || res.status === 403) {
       throw new Error("Incorrect email or password.");
     }
