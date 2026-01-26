@@ -467,3 +467,12 @@ main.dash{ flex:1; }
   color: rgba(24,95,133,.95);
 }
 
+
+.aa-alert-active {
+  color: #b42318; /* calm red */
+  font-weight: 600;
+}
+
+.aa-alert-active span:first-child {
+  font-weight: 700;
+}

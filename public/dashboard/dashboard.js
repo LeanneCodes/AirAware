@@ -348,41 +348,68 @@ document.addEventListener("DOMContentLoaded", () => {
       ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
     `;
   }
+  
+function renderAlerts(payload) {
+  if (!els.recentAlerts) return;
 
-  function renderAlerts(payload) {
-    if (!els.recentAlerts) return;
+  const aqi = payload?.current?.aqi ?? null;
+  const observedAt = payload?.current?.observed_at ?? null;
+  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
 
-    const alerts = payload?.alerts || [];
-    const trigger = payload?.thresholds?.effective_trigger_aqi ?? 3;
+  const lines = [];
 
-    const aqi = payload?.current?.aqi ?? null;
-    const observedAt = payload?.current?.observed_at ?? null;
-
-    const lines = [];
-
-    if (aqi && observedAt) {
-      const t = new Date(observedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-      const msg =
-        aqi >= trigger
-          ? `AQI (${aqiName(aqi)}) is above your alert threshold (${aqiName(trigger)}).`
-          : `AQI (${aqiName(aqi)}) is below your alert threshold (${aqiName(trigger)}).`;
-      lines.push({ t, msg });
-    }
-
-    alerts.slice(0, 5).forEach((a) => {
-      const t = new Date(a.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-      lines.push({ t, msg: `${a.risk_level} risk: ${a.explanation}` });
+  if (aqi && triggerIdx && observedAt) {
+    const time = new Date(observedAt).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    if (!lines.length) {
-      els.recentAlerts.innerHTML = `<div class="aa-alert-line"><span>—</span><span>No alerts yet</span></div>`;
-      return;
-    }
+    const currentName = aqiName(aqi);
+    const triggerName = aqiName(triggerIdx);
 
-    els.recentAlerts.innerHTML = lines
-      .map((x) => `<div class="aa-alert-line"><span>${x.t}</span><span>— ${x.msg}</span></div>`)
-      .join("");
+    const alertActive = aqi >= triggerIdx;
+
+    const msg = alertActive
+      ? `⚠️ Alert triggered: Air quality is ${currentName}. This matches your current sensitivity setting.`
+      : `Air quality is ${currentName}. No alert for your current sensitivity setting.`;
+
+    lines.push({
+      t: time,
+      msg,
+      alertActive,
+    });
   }
+
+  const backendAlerts = payload?.alerts || [];
+  backendAlerts.slice(0, 4).forEach((a) => {
+    const t = new Date(a.created_at).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    lines.push({
+      t,
+      msg: `${a.risk_level} risk: ${a.explanation}`,
+      alertActive: true,
+    });
+  });
+
+  if (!lines.length) {
+    els.recentAlerts.innerHTML =
+      `<div class="aa-alert-line"><span>—</span><span>No alerts yet</span></div>`;
+    return;
+  }
+
+  els.recentAlerts.innerHTML = lines
+    .map(
+      (x) => `
+        <div class="aa-alert-line ${x.alertActive ? "aa-alert-active" : ""}">
+          <span>${x.t}</span>
+          <span>— ${x.msg}</span>
+        </div>
+      `
+    )
+    .join("");
+}
 
   /* -----------------------------
      5) Data loading functions
