@@ -548,10 +548,6 @@ main.dash{ flex:1; }
   color: #b42318; /* muted red */
 }
 
-.recoList--alert li {
-  /* subtle emphasis only when alert is active */
-}
-
 .recoFoot {
   margin-top: 10px;
   padding-top: 10px;
