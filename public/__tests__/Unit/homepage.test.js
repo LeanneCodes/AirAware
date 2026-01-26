@@ -39,8 +39,9 @@ describe("Homepage (public/index.html)", () => {
     expect(nav).not.toBeNull();
 
     // Brand link + logo
-    const brandLink = nav.querySelector('a.navbar-brand[aria-label="AirAware+ Home"][href="/"]');
+    const brandLink = nav.querySelector('a.navbar-brand[aria-label="AirAware+ Home"]');
     expect(brandLink).not.toBeNull();
+    expect(brandLink.getAttribute("href")).toBe("/");
 
     const logo = nav.querySelector('a.navbar-brand img[alt="AirAware+"]');
     expect(logo).not.toBeNull();

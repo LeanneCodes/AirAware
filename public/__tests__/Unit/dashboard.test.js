@@ -31,8 +31,9 @@ describe("Dashboard page (public/dashboard.html)", () => {
 
   test("navbar has brand link, nav links, welcome text, and profile button", () => {
     // Brand link + logo
-    const brandLink = document.querySelector('a.navbar-brand[aria-label="AirAware+ Home"][href="/"]');
+    const brandLink = document.querySelector('a.navbar-brand[aria-label="AirAware+ Home"]');
     expect(brandLink).not.toBeNull();
+    expect(brandLink.getAttribute("href")).toBe("/");
 
     const brandLogo = document.querySelector('a.navbar-brand img[alt="AirAware+"]');
     expect(brandLogo).not.toBeNull();
