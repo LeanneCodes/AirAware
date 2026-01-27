@@ -1,9 +1,3 @@
-/*
- * Two modes:
- * - No token: save locally and continue (lets you develop without auth fully integrated)
- * - Token present: PATCH /api/thresholds (fallback to POST on 404)
- */
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".sensitivity-form");
   if (!form) {

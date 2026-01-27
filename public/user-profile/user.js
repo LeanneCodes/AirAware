@@ -1,15 +1,3 @@
-/*
-  Profile behaviour:
-  - Inline form feedback (#formFeedback) for errors only
-  - Toast (top-right under navbar) for success + redirecting
-  - No alert()
-
-  Navbar name behaviour:
-  - Reads cached name from localStorage immediately to avoid "User" flash
-  - Fetches /api/user/me in background to keep it accurate
-  - After successful profile save, updates the cached name + navbar instantly
-*/
-
 document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.querySelector(".formGrid");
@@ -201,9 +189,6 @@ async function updateProfile(profile) {
 
 function getUserFromApiResponse(data) {
   // Support common shapes:
-  // - { user: {...} }
-  // - { data: { user: {...} } }
-  // - { ...userFields }
   return data?.user || data?.data?.user || data;
 }
 
@@ -220,19 +205,4 @@ function buildDisplayName(user) {
   if (email.includes("@")) return email.split("@")[0];
 
   return null;
-}
-
-function setNavbarName(name) {
-  const el = document.getElementById("welcomeUserName");
-  if (!el) return;
-  el.textContent = name || "User";
-}
-
-function syncCachedNavbarNameFromUserResponse(data) {
-  const user = getUserFromApiResponse(data);
-  const name = buildDisplayName(user);
-  if (!name) return;
-
-  localStorage.setItem("aa_user_name", name);
-  setNavbarName(name);
 }
