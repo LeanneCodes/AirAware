@@ -290,7 +290,9 @@
           <!-- Charts -->
           <section class="aa-card" aria-label="Charts">
             <div class="aa-card-header">
-              <h2 class="aa-card-title">Trends</h2>
+              <h2 class="aa-card-title">
+                Trends <span class="aa-muted">for</span> <span id="trendsCity">—</span>
+              </h2>
 
               <div class="data-source-inline">
                 <span class="data-source-label">Data source:</span>
@@ -303,17 +305,17 @@
   <div class="trendsGrid">
     <div class="trendCard">
       <h3>All pollutants (last 12h)</h3>
-      <canvas id="chartAllPollutants" height="180"></canvas>
+      <canvas id="chartAllPollutants"></canvas>
     </div>
 
     <div class="trendCard">
       <h3>PM2.5 intensity (last 12h)</h3>
-      <canvas id="chartPm25Heat" height="180"></canvas>
+      <canvas id="chartPm25Heat"></canvas>
     </div>
 
     <div class="trendCard">
       <h3>AQI (last 12h)</h3>
-      <canvas id="chartAqi" height="180"></canvas>
+      <canvas id="chartAqi"></canvas>
     </div>
   </div>
 </section>

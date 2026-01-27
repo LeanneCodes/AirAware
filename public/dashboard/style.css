@@ -91,7 +91,10 @@ main.dash{ flex:1; }
   text-transform: uppercase;
   color: rgba(15,23,42,.75);
 }
-.aa-card-body{ padding: 1rem; }
+
+.aa-card-body {
+    padding: 0 1rem 1rem;
+}
 
 /* Sidebar buttons */
 .aa-btn-ghost{
@@ -672,25 +675,6 @@ main.dash{ flex:1; }
   opacity: 0.45;
 }
 
-.trendsGrid{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-.trendCard{
-  background:#fff;
-  border-radius:12px;
-  padding:12px;
-  border:1px solid rgba(0,0,0,0.08);
-}
-.trendCard h3{
-  font-size:14px;
-  margin:0 0 8px 0;
-}
-@media (max-width: 1100px){
-  .trendsGrid{ grid-template-columns: 1fr; }
-}
-
 .logout-link {
   text-decoration: none;
   font-weight: 600;
@@ -700,4 +684,67 @@ main.dash{ flex:1; }
 }
 .logout-link:hover {
   text-decoration: underline;
+}
+
+/* =========================
+   Trends section (FIXED)
+   ========================= */
+
+/* charts-grid exists higher up the layout and may become multi-column
+   We force the single Trends panel to span ALL columns */
+#chartsGrid > .chartPanel{
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* The actual trends grid (3 equal charts) */
+.trendsGrid{
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Responsive collapse */
+@media (max-width: 991.98px){
+  .trendsGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px){
+  .trendsGrid{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Individual chart cards */
+.trendCard{
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--aa-border);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.92);
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card titles */
+.trendCard h3{
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: rgba(15,23,42,0.85);
+}
+
+/* Chart canvas – stable sizing */
+.trendCard canvas{
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 220px !important;
 }

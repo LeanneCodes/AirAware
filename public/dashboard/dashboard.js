@@ -1,10 +1,11 @@
 /*
-  What this file does (high level):
+  Dashboard behaviour (high level):
   1) Waits for the page HTML to load
   2) Calls backend APIs to get dashboard data (current AQI, pollutants, alerts, recommendations)
   3) Renders that data into the page
   4) Loads saved locations and lets the user switch location
   5) Lets the user refresh the data manually
+  6) Renders trends charts (last 12h) and keeps them responsive on resize
 */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -29,23 +30,25 @@ document.addEventListener("DOMContentLoaded", () => {
     locationName: document.getElementById("locationName"),
     currentDateTime: document.getElementById("currentDateTime"),
     overallAQ: document.getElementById("overallAQ"),
-
     aqiMeterFill: document.getElementById("aqMeterFill"),
 
     recommendations: document.getElementById("recommendations"),
     refreshBtn: document.getElementById("refreshBtn"),
 
+    // NEW: Trends title city (add <span id="trendsCity"></span> in HTML)
+    trendsCity: document.getElementById("trendsCity"),
+
     pollutants: {
       pm25: { value: document.getElementById("pm25Value"), status: document.getElementById("pm25Status") },
       pm10: { value: document.getElementById("pm10Value"), status: document.getElementById("pm10Status") },
-      so2:  { value: document.getElementById("so2Value"),  status: document.getElementById("so2Status")  },
-      no2:  { value: document.getElementById("no2Value"),  status: document.getElementById("no2Status")  },
-      o3:   { value: document.getElementById("o3Value"),   status: document.getElementById("o3Status")   },
-      co:   { value: document.getElementById("coValue"),   status: document.getElementById("coStatus")   },
+      so2: { value: document.getElementById("so2Value"), status: document.getElementById("so2Status") },
+      no2: { value: document.getElementById("no2Value"), status: document.getElementById("no2Status") },
+      o3: { value: document.getElementById("o3Value"), status: document.getElementById("o3Status") },
+      co: { value: document.getElementById("coValue"), status: document.getElementById("coStatus") },
     },
   };
 
-    const confirmEls = {
+  const confirmEls = {
     modal: document.getElementById("confirmDeleteModal"),
     text: document.getElementById("confirmDeleteText"),
     btn: document.getElementById("confirmDeleteBtn"),
@@ -88,51 +91,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   /* -----------------------------
      Pollutant bands
   -------------------------------- */
 
   const POLLUTANT_BANDS = {
-    so2:  [
-      { idx: 1, min: 0,     max: 20 },
-      { idx: 2, min: 20,    max: 80 },
-      { idx: 3, min: 80,    max: 250 },
-      { idx: 4, min: 250,   max: 350 },
-      { idx: 5, min: 350,   max: Infinity },
+    so2: [
+      { idx: 1, min: 0, max: 20 },
+      { idx: 2, min: 20, max: 80 },
+      { idx: 3, min: 80, max: 250 },
+      { idx: 4, min: 250, max: 350 },
+      { idx: 5, min: 350, max: Infinity },
     ],
-    no2:  [
-      { idx: 1, min: 0,     max: 40 },
-      { idx: 2, min: 40,    max: 70 },
-      { idx: 3, min: 70,    max: 150 },
-      { idx: 4, min: 150,   max: 200 },
-      { idx: 5, min: 200,   max: Infinity },
+    no2: [
+      { idx: 1, min: 0, max: 40 },
+      { idx: 2, min: 40, max: 70 },
+      { idx: 3, min: 70, max: 150 },
+      { idx: 4, min: 150, max: 200 },
+      { idx: 5, min: 200, max: Infinity },
     ],
     pm10: [
-      { idx: 1, min: 0,     max: 20 },
-      { idx: 2, min: 20,    max: 50 },
-      { idx: 3, min: 50,    max: 100 },
-      { idx: 4, min: 100,   max: 200 },
-      { idx: 5, min: 200,   max: Infinity },
+      { idx: 1, min: 0, max: 20 },
+      { idx: 2, min: 20, max: 50 },
+      { idx: 3, min: 50, max: 100 },
+      { idx: 4, min: 100, max: 200 },
+      { idx: 5, min: 200, max: Infinity },
     ],
     pm25: [
-      { idx: 1, min: 0,     max: 10 },
-      { idx: 2, min: 10,    max: 25 },
-      { idx: 3, min: 25,    max: 50 },
-      { idx: 4, min: 50,    max: 75 },
-      { idx: 5, min: 75,    max: Infinity },
+      { idx: 1, min: 0, max: 10 },
+      { idx: 2, min: 10, max: 25 },
+      { idx: 3, min: 25, max: 50 },
+      { idx: 4, min: 50, max: 75 },
+      { idx: 5, min: 75, max: Infinity },
     ],
-    o3:   [
-      { idx: 1, min: 0,     max: 60 },
-      { idx: 2, min: 60,    max: 100 },
-      { idx: 3, min: 100,   max: 140 },
-      { idx: 4, min: 140,   max: 180 },
-      { idx: 5, min: 180,   max: Infinity },
+    o3: [
+      { idx: 1, min: 0, max: 60 },
+      { idx: 2, min: 60, max: 100 },
+      { idx: 3, min: 100, max: 140 },
+      { idx: 4, min: 140, max: 180 },
+      { idx: 5, min: 180, max: Infinity },
     ],
-    co:   [
-      { idx: 1, min: 0,     max: 4400 },
-      { idx: 2, min: 4400,  max: 9400 },
-      { idx: 3, min: 9400,  max: 12400 },
+    co: [
+      { idx: 1, min: 0, max: 4400 },
+      { idx: 2, min: 4400, max: 9400 },
+      { idx: 3, min: 9400, max: 12400 },
       { idx: 4, min: 12400, max: 15400 },
       { idx: 5, min: 15400, max: Infinity },
     ],
@@ -144,6 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let locationsHistory = [];
   let activeLocation = null;
+
   /* -----------------------------
      2.5) Trends charts (last 12h)
   -------------------------------- */
@@ -151,6 +154,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let chartAllPollutants = null;
   let chartPm25Heat = null;
   let chartAqi = null;
+
+  let trendsResizeObserver = null;
 
   function cityQueryFromLabel(label) {
     // "London, GB" -> "London,GB"
@@ -164,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const label = activeLocation?.label || els.locationName?.textContent || "London,GB";
     const city = cityQueryFromLabel(label);
 
+    // NOTE: This endpoint is relative (your backend presumably serves it)
     const res = await fetch(`/api/air/trends?city=${encodeURIComponent(city)}&hours=${hours}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -171,12 +177,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || data.message || "Failed to load trends");
 
-    const points = (data.points || []).filter(p => p.ts).sort((a, b) => a.ts - b.ts);
+    const points = (data.points || []).filter((p) => p.ts).sort((a, b) => a.ts - b.ts);
     return points;
   }
 
+  function buildChartOptions(extra = {}) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false, // IMPORTANT: prevents cut-off / strange scaling
+      resizeDelay: 100,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom" },
+      },
+      ...extra,
+    };
+  }
+
   function renderTrendCharts(points) {
-    const labels = points.map(p =>
+    const labels = points.map((p) =>
       new Date(p.ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
     );
 
@@ -189,15 +208,15 @@ document.addEventListener("DOMContentLoaded", () => {
         data: {
           labels,
           datasets: [
-            { label: "PM2.5", data: points.map(p => p.pm25) },
-            { label: "PM10",  data: points.map(p => p.pm10) },
-            { label: "NO2",   data: points.map(p => p.no2) },
-            { label: "O3",    data: points.map(p => p.o3) },
-            { label: "SO2",   data: points.map(p => p.so2) },
-            { label: "CO",    data: points.map(p => p.co) },
+            { label: "PM2.5", data: points.map((p) => p.pm25) },
+            { label: "PM10", data: points.map((p) => p.pm10) },
+            { label: "NO2", data: points.map((p) => p.no2) },
+            { label: "O3", data: points.map((p) => p.o3) },
+            { label: "SO2", data: points.map((p) => p.so2) },
+            { label: "CO", data: points.map((p) => p.co) },
           ],
         },
-        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+        options: buildChartOptions(),
       });
     }
 
@@ -209,9 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "bar",
         data: {
           labels,
-          datasets: [{ label: "PM2.5", data: points.map(p => p.pm25) }],
+          datasets: [{ label: "PM2.5", data: points.map((p) => p.pm25) }],
         },
-        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+        options: buildChartOptions(),
       });
     }
 
@@ -221,25 +240,44 @@ document.addEventListener("DOMContentLoaded", () => {
       if (chartAqi) chartAqi.destroy();
       chartAqi = new Chart(c3.getContext("2d"), {
         type: "line",
-        data: { labels, datasets: [{ label: "AQI", data: points.map(p => p.aqi) }] },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: "bottom" } },
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        data: {
+          labels,
+          datasets: [{ label: "AQI", data: points.map((p) => p.aqi) }],
         },
+        options: buildChartOptions({
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        }),
       });
     }
+
+    observeTrendsResize();
+  }
+
+  function observeTrendsResize() {
+    const grid = document.querySelector(".trendsGrid");
+    if (!grid || !window.ResizeObserver) return;
+
+    if (trendsResizeObserver) trendsResizeObserver.disconnect();
+
+    trendsResizeObserver = new ResizeObserver(() => {
+      chartAllPollutants?.resize();
+      chartPm25Heat?.resize();
+      chartAqi?.resize();
+    });
+
+    trendsResizeObserver.observe(grid);
   }
 
   async function refreshTrends() {
     try {
       const points = await fetchTrends(12);
-      if (!points) return;
+      if (!points || points.length === 0) return;
       renderTrendCharts(points);
     } catch (err) {
-      console.error("Trends error:", err.message);
+      console.error("Trends error:", err.message || err);
     }
   }
+
   /* -----------------------------
      3) Helpers
   -------------------------------- */
@@ -296,139 +334,89 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function uiLabelFromUiValue(v) {
-  const map = {
-    "very-sensitive": "Very sensitive",
-    "sensitive": "Sensitive",
-    "moderate": "Moderately sensitive",
-    "slight": "Slightly sensitive",
-    "not-sensitive": "Not sensitive",
-    "unknown": "Moderately sensitive",
-  };
-  return map[v] || "—";
-}
-
-function sensitivityLabelFromTriggerIdx(triggerIdx) {
-  const map = {
-    2: "Very sensitive",
-    3: "Sensitive",
-    4: "Moderately sensitive",
-    5: "Not sensitive",
-  };
-  return map[triggerIdx] || "Moderately sensitive";
-}
-
-function getSensitivityLabel(payload) {
-  const uiValue = localStorage.getItem("sensitivity_ui");
-  if (uiValue) return uiLabelFromUiValue(uiValue);
-
-  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
-  if (triggerIdx) return sensitivityLabelFromTriggerIdx(triggerIdx);
-
-  return "Moderately sensitive";
-}
-
-  function triggerToSensitivityLabel(triggerIdx) {
-  const map = {
-    2: "Very sensitive",
-    3: "Sensitive",
-    4: "Moderately sensitive",
-    5: "Not sensitive",
-  };
-  return map[triggerIdx] || "Moderately sensitive";
-}
-
-function dominantTip(dominantKey) {
-  switch (dominantKey) {
-    case "no2":
-    case "co":
-      return [
-        "Traffic-related pollutants can be higher near busy roads.",
-        "Choose quieter streets or green spaces, ventilate indoors outside rush hour.",
-      ];
-    case "pm25":
-    case "pm10":
-      return [
-        "Fine particles can come from smoke, dust, and traffic.",
-        "Avoid smoky areas and heavy-dust routes, check air quality again later.",
-      ];
-    case "o3":
-      return [
-        "Ozone can be higher on warm, sunny afternoons.",
-        "If possible, plan outdoor activity for morning or evening.",
-      ];
-    case "so2":
-      return [
-        "SO₂ can rise near industry or dense traffic in some areas.",
-        "Avoid lingering near strong fumes, consider a quieter route.",
-      ];
-    default:
-      return [];
+    const map = {
+      "very-sensitive": "Very sensitive",
+      sensitive: "Sensitive",
+      moderate: "Moderately sensitive",
+      slight: "Slightly sensitive",
+      "not-sensitive": "Not sensitive",
+      unknown: "Moderately sensitive",
+    };
+    return map[v] || "—";
   }
-}
 
-function buildRecoList({ sensitivityLabel, alertActive, currentAqiName }) {
-  const base = {
-    "Not sensitive": alertActive
-      ? [
-          `Air quality is ${currentAqiName}. Consider reducing prolonged time near traffic.`,
-          "If exercising outdoors, choose green spaces away from busy roads.",
-        ]
-      : [
-          "Outdoor activities are generally fine.",
-          "If exercising outdoors, prefer greener routes away from main roads.",
-        ],
+  function sensitivityLabelFromTriggerIdx(triggerIdx) {
+    const map = {
+      2: "Very sensitive",
+      3: "Sensitive",
+      4: "Moderately sensitive",
+      5: "Not sensitive",
+    };
+    return map[triggerIdx] || "Moderately sensitive";
+  }
 
-    "Slightly sensitive": alertActive
-      ? [
-          `Air quality is ${currentAqiName}. Consider shortening outdoor activity near traffic.`,
-          "If needed, switch to an indoor option for comfort.",
-        ]
-      : [
-          "Outdoor activities are usually comfortable.",
-          "Avoid lingering near congested roads or idling vehicles.",
-        ],
+  function getSensitivityLabel(payload) {
+    const uiValue = localStorage.getItem("sensitivity_ui");
+    if (uiValue) return uiLabelFromUiValue(uiValue);
 
-    "Moderately sensitive": alertActive
-      ? [
-          `Air quality is ${currentAqiName}. Reduce time outdoors, especially near busy roads.`,
-          "Consider rescheduling outdoor exercise to later in the day.",
-          "Keep windows closed during peak traffic hours if possible.",
-        ]
-      : [
-          "Plan outdoor activities away from main roads where possible.",
-          "Ventilate indoor spaces during quieter traffic periods.",
-        ],
+    const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
+    if (triggerIdx) return sensitivityLabelFromTriggerIdx(triggerIdx);
 
-    "Sensitive": alertActive
-      ? [
-          `Air quality is ${currentAqiName}. Limit outdoor activity near busy roads.`,
-          "Prefer indoor activities where possible.",
-          "Ventilate indoors outside peak traffic hours.",
-        ]
-      : [
-          "Be mindful of prolonged outdoor activity near traffic.",
-          "Choose quieter routes and green spaces when you can.",
-        ],
+    return "Moderately sensitive";
+  }
 
-    "Very sensitive": alertActive
-      ? [
-          `Air quality is ${currentAqiName}. Avoid outdoor activity near roads if possible.`,
-          "Stay indoors during peak pollution times where practical.",
-          "Ventilate rooms later when outdoor levels may be lower.",
-        ]
-      : [
-          "Plan routes away from busy roads where possible.",
-          "Check air quality updates throughout the day.",
-        ],
-  };
+  function dominantTip(dominantKey) {
+    switch (dominantKey) {
+      case "no2":
+      case "co":
+        return [
+          "Traffic-related pollutants can be higher near busy roads.",
+          "Choose quieter streets or green spaces, ventilate indoors outside rush hour.",
+        ];
+      case "pm25":
+      case "pm10":
+        return [
+          "Fine particles can come from smoke, dust, and traffic.",
+          "Avoid smoky areas and heavy-dust routes, check air quality again later.",
+        ];
+      case "o3":
+        return ["Ozone can be higher on warm, sunny afternoons.", "If possible, plan outdoor activity for morning or evening."];
+      case "so2":
+        return ["SO₂ can rise near industry or dense traffic in some areas.", "Avoid lingering near strong fumes, consider a quieter route."];
+      default:
+        return [];
+    }
+  }
 
-  return base[sensitivityLabel] || base["Moderately sensitive"];
-}
+  function buildRecoList({ sensitivityLabel, alertActive, currentAqiName }) {
+    const base = {
+      "Not sensitive": alertActive
+        ? [`Air quality is ${currentAqiName}. Consider reducing prolonged time near traffic.`, "If exercising outdoors, choose green spaces away from busy roads."]
+        : ["Outdoor activities are generally fine.", "If exercising outdoors, prefer greener routes away from main roads."],
 
-function safeLink(url, text) {
-  return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-}
+      "Slightly sensitive": alertActive
+        ? [`Air quality is ${currentAqiName}. Consider shortening outdoor activity near traffic.`, "If needed, switch to an indoor option for comfort."]
+        : ["Outdoor activities are usually comfortable.", "Avoid lingering near congested roads or idling vehicles."],
 
+      "Moderately sensitive": alertActive
+        ? [`Air quality is ${currentAqiName}. Reduce time outdoors, especially near busy roads.`, "Consider rescheduling outdoor exercise to later in the day.", "Keep windows closed during peak traffic hours if possible."]
+        : ["Plan outdoor activities away from main roads where possible.", "Ventilate indoor spaces during quieter traffic periods."],
+
+      Sensitive: alertActive
+        ? [`Air quality is ${currentAqiName}. Limit outdoor activity near busy roads.`, "Prefer indoor activities where possible.", "Ventilate indoors outside peak traffic hours."]
+        : ["Be mindful of prolonged outdoor activity near traffic.", "Choose quieter routes and green spaces when you can."],
+
+      "Very sensitive": alertActive
+        ? [`Air quality is ${currentAqiName}. Avoid outdoor activity near roads if possible.`, "Stay indoors during peak pollution times where practical.", "Ventilate rooms later when outdoor levels may be lower."]
+        : ["Plan routes away from busy roads where possible.", "Check air quality updates throughout the day."],
+    };
+
+    return base[sensitivityLabel] || base["Moderately sensitive"];
+  }
+
+  function safeLink(url, text) {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+  }
 
   function pollutantIndex(pollutantKey, value) {
     if (value === null || value === undefined) return null;
@@ -454,20 +442,24 @@ function safeLink(url, text) {
     return Number(a?.latitude) === Number(b?.latitude) && Number(a?.longitude) === Number(b?.longitude);
   }
 
-
-
   /* -----------------------------
      3.5) Indicator helpers
   -------------------------------- */
 
   function statusClassFromIdx(aqiIdx) {
     switch (aqiIdx) {
-      case 1: return "is-good";
-      case 2: return "is-fair";
-      case 3: return "is-moderate";
-      case 4: return "is-poor";
-      case 5: return "is-verypoor";
-      default: return "";
+      case 1:
+        return "is-good";
+      case 2:
+        return "is-fair";
+      case 3:
+        return "is-moderate";
+      case 4:
+        return "is-poor";
+      case 5:
+        return "is-verypoor";
+      default:
+        return "";
     }
   }
 
@@ -475,10 +467,10 @@ function safeLink(url, text) {
     if (!els.aqiMeterFill) return;
 
     const config = {
-      1: { width: "100%",  colour: "#2f9e44" },
-      2: { width: "80%",  colour: "#66a80f" },
-      3: { width: "60%",  colour: "#fab005" },
-      4: { width: "40%",  colour: "#e03131" },
+      1: { width: "100%", colour: "#2f9e44" },
+      2: { width: "80%", colour: "#66a80f" },
+      3: { width: "60%", colour: "#fab005" },
+      4: { width: "40%", colour: "#e03131" },
       5: { width: "20%", colour: "#6a040f" },
     };
 
@@ -518,16 +510,16 @@ function safeLink(url, text) {
       "PM2.5": "pm25",
       "PM 2.5": "pm25",
       "PM₂.₅": "pm25",
-      "PM10": "pm10",
+      PM10: "pm10",
       "PM 10": "pm10",
       "PM₁₀": "pm10",
-      "SO2": "so2",
+      SO2: "so2",
       "SO₂": "so2",
-      "NO2": "no2",
+      NO2: "no2",
       "NO₂": "no2",
-      "O3": "o3",
+      O3: "o3",
       "O₃": "o3",
-      "CO": "co",
+      CO: "co",
     };
 
     return keyMap[String(raw).trim()] || null;
@@ -543,6 +535,9 @@ function safeLink(url, text) {
     const label = activeLocation?.label || "—";
     setText(els.locationName, label);
     setText(els.activeSearchName, label);
+
+    // NEW: update trends title city
+    if (els.trendsCity) setText(els.trendsCity, label);
 
     const aqi = payload?.current?.aqi ?? null;
     setText(els.overallAQ, aqiName(aqi));
@@ -573,157 +568,139 @@ function safeLink(url, text) {
 
     setText(els.pollutants.pm25.value, round(p.pm25));
     setText(els.pollutants.pm10.value, round(p.pm10));
-    setText(els.pollutants.so2.value,  round(p.so2));
-    setText(els.pollutants.no2.value,  round(p.no2));
-    setText(els.pollutants.o3.value,   round(p.o3));
-    setText(els.pollutants.co.value,   round(p.co));
+    setText(els.pollutants.so2.value, round(p.so2));
+    setText(els.pollutants.no2.value, round(p.no2));
+    setText(els.pollutants.o3.value, round(p.o3));
+    setText(els.pollutants.co.value, round(p.co));
 
     const pm25Idx = pollutantIndex("pm25", p.pm25);
     const pm10Idx = pollutantIndex("pm10", p.pm10);
-    const so2Idx  = pollutantIndex("so2",  p.so2);
-    const no2Idx  = pollutantIndex("no2",  p.no2);
-    const o3Idx   = pollutantIndex("o3",   p.o3);
-    const coIdx   = pollutantIndex("co",   p.co);
+    const so2Idx = pollutantIndex("so2", p.so2);
+    const no2Idx = pollutantIndex("no2", p.no2);
+    const o3Idx = pollutantIndex("o3", p.o3);
+    const coIdx = pollutantIndex("co", p.co);
 
     setText(els.pollutants.pm25.status, aqiName(pm25Idx));
     setText(els.pollutants.pm10.status, aqiName(pm10Idx));
-    setText(els.pollutants.so2.status,  aqiName(so2Idx));
-    setText(els.pollutants.no2.status,  aqiName(no2Idx));
-    setText(els.pollutants.o3.status,   aqiName(o3Idx));
-    setText(els.pollutants.co.status,   aqiName(coIdx));
+    setText(els.pollutants.so2.status, aqiName(so2Idx));
+    setText(els.pollutants.no2.status, aqiName(no2Idx));
+    setText(els.pollutants.o3.status, aqiName(o3Idx));
+    setText(els.pollutants.co.status, aqiName(coIdx));
 
     setCardStatusClass("pm25", pm25Idx);
     setCardStatusClass("pm10", pm10Idx);
-    setCardStatusClass("so2",  so2Idx);
-    setCardStatusClass("no2",  no2Idx);
-    setCardStatusClass("o3",   o3Idx);
-    setCardStatusClass("co",   coIdx);
+    setCardStatusClass("so2", so2Idx);
+    setCardStatusClass("no2", no2Idx);
+    setCardStatusClass("o3", o3Idx);
+    setCardStatusClass("co", coIdx);
   }
 
   function renderRecommendations(payload) {
-  if (!els.recommendations) return;
+    if (!els.recommendations) return;
 
-  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? 3;
-  const aqi = payload?.current?.aqi ?? null;
+    const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? 3;
+    const aqi = payload?.current?.aqi ?? null;
 
-  const currentAqiName = aqiName(aqi);
-  const triggerAqiName = aqiName(triggerIdx);
+    const currentAqiName = aqiName(aqi);
+    const triggerAqiName = aqiName(triggerIdx);
 
-  const alertActive = (aqi != null && triggerIdx != null) ? (aqi >= triggerIdx) : false;
+    const alertActive = aqi != null && triggerIdx != null ? aqi >= triggerIdx : false;
+    const sensitivityLabel = getSensitivityLabel(payload);
 
-  const sensitivityLabel = getSensitivityLabel(payload);
+    const dominantRaw = payload?.status?.dominant_pollutant || null;
+    const dominantKey = normaliseDominantPollutantKey(dominantRaw);
 
-  const dominantRaw = payload?.status?.dominant_pollutant || null;
-  const dominantKey = normaliseDominantPollutantKey(dominantRaw);
+    const baseTips = buildRecoList({ sensitivityLabel, alertActive, currentAqiName });
+    const domTips = dominantTip(dominantKey);
 
-  const baseTips = buildRecoList({ sensitivityLabel, alertActive, currentAqiName });
-  const domTips = dominantTip(dominantKey);
+    const nhsUrl =
+      "https://www.gov.uk/government/publications/health-effects-of-air-pollution/health-advice-for-the-daily-air-quality-index-daqi";
+    const nhsLink = safeLink(nhsUrl, "DEFRA- Health advice for the Daily Air Quality Index (DAQI)");
 
-  const nhsUrl = "https://www.gov.uk/government/publications/health-effects-of-air-pollution/health-advice-for-the-daily-air-quality-index-daqi";
-  const nhsLink = safeLink(nhsUrl, "DEFRA- Health advice for the Daily Air Quality Index (DAQI)");
+    const title = alertActive ? "Alert Active" : "General Guidance";
 
-  const title = alertActive
-    ? `Alert Active`
-    : `General Guidance`;
+    const intro = alertActive
+      ? `Air quality is <strong>${currentAqiName}</strong>, which meets your alert setting (<strong>${triggerAqiName}</strong> or worse) for <strong>${sensitivityLabel}</strong>.`
+      : `Your setting is <strong>${sensitivityLabel}</strong>. Alerts start when air quality becomes <strong>${triggerAqiName}</strong> or worse.`;
 
-  const intro = alertActive
-    ? `Air quality is <strong>${currentAqiName}</strong>, which meets your alert setting (<strong>${triggerAqiName}</strong> or worse) for <strong>${sensitivityLabel}</strong>.`
-    : `Your setting is <strong>${sensitivityLabel}</strong>. Alerts start when air quality becomes <strong>${triggerAqiName}</strong> or worse.`;
+    const bullets = [...baseTips, ...domTips]
+      .slice(0, 6)
+      .map((t) => `<li>${t}</li>`)
+      .join("");
 
-  const bullets = [...baseTips, ...domTips]
-    .slice(0, 6) 
-    .map((t) => `<li>${t}</li>`)
-    .join("");
-
-  const footer = `
-    <div class="recoFoot">
-      <div class="recoSmall">
-        <strong>Important:</strong> This section is for environmental awareness only and is <strong>not medical advice</strong>.
-        If you feel unwell or develop symptoms, seek advice from a healthcare professional.
-      </div>
-      <div class="recoSmall">
-        Source: ${nhsLink}
-      </div>
-      <div class="recoSmall">
-        In an emergency, call <strong>999</strong> (UK).
-      </div>
-    </div>
-  `;
-
-
-  els.recommendations.innerHTML = `
-    <div class="recoTitle ${alertActive ? "recoTitle--alert" : ""}">${title}</div>
-    <div class="recoLine">${intro}</div>
-
-    <ul class="recoList ${alertActive ? "recoList--alert" : ""}">
-      ${bullets}
-    </ul>
-
-    ${footer}
-  `;
-}
-
-function renderAlerts(payload) {
-  if (!els.recentAlerts) return;
-
-  const aqi = payload?.current?.aqi ?? null;
-  const observedAt = payload?.current?.observed_at ?? null;
-  const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
-
-  const lines = [];
-
-  if (aqi && triggerIdx && observedAt) {
-    const time = new Date(observedAt).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const currentName = aqiName(aqi);
-    const triggerName = aqiName(triggerIdx);
-
-    const alertActive = aqi >= triggerIdx;
-
-    const msg = alertActive
-      ? `⚠️ Alert triggered: Air quality is ${currentName}. This matches your current sensitivity setting.`
-      : `Air quality is ${currentName}. No alert for your current sensitivity setting.`;
-
-    lines.push({
-      t: time,
-      msg,
-      alertActive,
-    });
-  }
-
-  const backendAlerts = payload?.alerts || [];
-  backendAlerts.slice(0, 4).forEach((a) => {
-    const t = new Date(a.created_at).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    lines.push({
-      t,
-      msg: `${a.risk_level} risk: ${a.explanation}`,
-      alertActive: true,
-    });
-  });
-
-  if (!lines.length) {
-    els.recentAlerts.innerHTML =
-      `<div class="aa-alert-line"><span>—</span><span>No alerts yet</span></div>`;
-    return;
-  }
-
-  els.recentAlerts.innerHTML = lines
-    .map(
-      (x) => `
-        <div class="aa-alert-line ${x.alertActive ? "aa-alert-active" : ""}">
-          <span>${x.t}</span>
-          <span>— ${x.msg}</span>
+    const footer = `
+      <div class="recoFoot">
+        <div class="recoSmall">
+          <strong>Important:</strong> This section is for environmental awareness only and is <strong>not medical advice</strong>.
+          If you feel unwell or develop symptoms, seek advice from a healthcare professional.
         </div>
-      `
-    )
-    .join("");
-}
+        <div class="recoSmall">
+          Source: ${nhsLink}
+        </div>
+        <div class="recoSmall">
+          In an emergency, call <strong>999</strong> (UK).
+        </div>
+      </div>
+    `;
+
+    els.recommendations.innerHTML = `
+      <div class="recoTitle ${alertActive ? "recoTitle--alert" : ""}">${title}</div>
+      <div class="recoLine">${intro}</div>
+
+      <ul class="recoList ${alertActive ? "recoList--alert" : ""}">
+        ${bullets}
+      </ul>
+
+      ${footer}
+    `;
+  }
+
+  function renderAlerts(payload) {
+    if (!els.recentAlerts) return;
+
+    const aqi = payload?.current?.aqi ?? null;
+    const observedAt = payload?.current?.observed_at ?? null;
+    const triggerIdx = payload?.thresholds?.effective_trigger_aqi ?? null;
+
+    const lines = [];
+
+    if (aqi && triggerIdx && observedAt) {
+      const time = new Date(observedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const currentName = aqiName(aqi);
+      const triggerName = aqiName(triggerIdx);
+
+      const alertActive = aqi >= triggerIdx;
+
+      const msg = alertActive
+        ? `⚠️ Alert triggered: Air quality is ${currentName}. This matches your current sensitivity setting.`
+        : `Air quality is ${currentName}. No alert for your current sensitivity setting.`;
+
+      lines.push({ t: time, msg, alertActive });
+    }
+
+    const backendAlerts = payload?.alerts || [];
+    backendAlerts.slice(0, 4).forEach((a) => {
+      const t = new Date(a.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      lines.push({ t, msg: `${a.risk_level} risk: ${a.explanation}`, alertActive: true });
+    });
+
+    if (!lines.length) {
+      els.recentAlerts.innerHTML = `<div class="aa-alert-line"><span>—</span><span>No alerts yet</span></div>`;
+      return;
+    }
+
+    els.recentAlerts.innerHTML = lines
+      .map(
+        (x) => `
+          <div class="aa-alert-line ${x.alertActive ? "aa-alert-active" : ""}">
+            <span>${x.t}</span>
+            <span>— ${x.msg}</span>
+          </div>
+        `
+      )
+      .join("");
+  }
+
 
   /* -----------------------------
      5) Data loading functions
