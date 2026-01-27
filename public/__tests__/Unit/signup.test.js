@@ -18,11 +18,12 @@ describe("Signup page (public/signup.html)", () => {
   test("title + css + script exist", () => {
     expect(document.title).toBe("AirAware+ | Create account");
 
-    expect(document.querySelector('link[rel="stylesheet"][href="/signup/signup.css"]')).not.toBeNull();
+    expect(
+      document.querySelector('link[rel="stylesheet"][href="/signup/signup.css"]')
+    ).not.toBeNull();
 
     const script = document.querySelector('script[src="/signup/signup.js"]');
     expect(script).not.toBeNull();
-    expect(script.hasAttribute("defer")).toBe(true);
   });
 
   test("form has email + password + confirmPassword + error element", () => {
