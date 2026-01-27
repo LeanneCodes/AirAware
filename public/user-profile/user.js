@@ -3,10 +3,15 @@
   - Inline form feedback (#formFeedback) for errors only
   - Toast (top-right under navbar) for success + redirecting
   - No alert()
+
+  Navbar name behaviour:
+  - Reads cached name from localStorage immediately to avoid "User" flash
+  - Fetches /api/user/me in background to keep it accurate
+  - After successful profile save, updates the cached name + navbar instantly
 */
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadNavbarUser();
+
   const form = document.querySelector(".formGrid");
   const saveBtn = document.getElementById("saveProfileBtn");
   const toastContainer = document.getElementById("aaToastContainer");
@@ -34,7 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      await updateProfile(profileData);
+      const updated = await updateProfile(profileData);
+
+      // Keep navbar name consistent across pages (cache + update instantly)
+      syncCachedNavbarNameFromUserResponse(updated);
 
       showToast({
         container: toastContainer,
@@ -48,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 500);
     } catch (err) {
       console.error("Profile update error:", err);
-
       showFormMessage(err.message || "Profile update failed. Please try again.", "danger");
       setSubmittingState(saveBtn, false);
     }
@@ -182,36 +189,50 @@ async function updateProfile(profile) {
     if (res.status === 401 || res.status === 403) {
       throw new Error("Your session has expired. Please log in again.");
     }
-    throw new Error(data?.error || "Profile update failed.");
+    throw new Error(data?.error || data?.message || "Profile update failed.");
   }
 
   return data;
 }
 
+/* -----------------------------
+   Navbar user name (no flash)
+-------------------------------- */
 
-async function loadNavbarUser() {
+function getUserFromApiResponse(data) {
+  // Support common shapes:
+  // - { user: {...} }
+  // - { data: { user: {...} } }
+  // - { ...userFields }
+  return data?.user || data?.data?.user || data;
+}
+
+function buildDisplayName(user) {
+  if (!user) return null;
+
+  const first =
+    (typeof user.first_name === "string" ? user.first_name.trim() : "") ||
+    (typeof user.name === "string" ? user.name.trim() : "");
+
+  if (first) return first;
+
+  const email = typeof user.email === "string" ? user.email : "";
+  if (email.includes("@")) return email.split("@")[0];
+
+  return null;
+}
+
+function setNavbarName(name) {
   const el = document.getElementById("welcomeUserName");
   if (!el) return;
+  el.textContent = name || "User";
+}
 
-  const token = localStorage.getItem("token");
-  if (!token) { el.textContent = "Guest"; return; }
+function syncCachedNavbarNameFromUserResponse(data) {
+  const user = getUserFromApiResponse(data);
+  const name = buildDisplayName(user);
+  if (!name) return;
 
-  try {
-    const res = await fetch("/api/dashboard", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) { el.textContent = "User"; return; }
-
-    const payload = await res.json();
-    const user = payload.user;
-
-    el.textContent =
-      user?.first_name ||
-      (user?.email ? String(user.email).split("@")[0] : null) ||
-      "User";
-  } catch (e) {
-    console.error("Navbar load failed:", e);
-    el.textContent = "User";
-  }
+  localStorage.setItem("aa_user_name", name);
+  setNavbarName(name);
 }
