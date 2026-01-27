@@ -202,3 +202,93 @@ body { background: #f1f6fa; }
 .logout-link:hover {
   text-decoration: underline;
 }
+
+/* Buttons: brand cancel + destructive remove */
+#deleteAccountModal .btn-outline-secondary{
+  border-color: rgba(11,95,133,0.35);
+  color: var(--aa-primary);
+  font-weight: 700;
+}
+#deleteAccountModal .btn-outline-secondary:hover{
+  background: var(--aa-primary-weak);
+  border-color: rgba(11,95,133,0.55);
+  color: var(--aa-primary);
+}
+
+/* Destructive button */
+#confirmDeleteAccountBtn.btn-danger{
+  background: var(--aa-danger);
+  border-color: var(--aa-danger);
+  font-weight: 800;
+}
+#confirmDeleteAccountBtn.btn-danger:hover{
+  filter: brightness(0.95);
+}
+#confirmDeleteAccountBtn.btn-danger:active{
+  filter: brightness(0.9);
+}
+
+/* Focus rings */
+#deleteAccountModal .btn:focus,
+#deleteAccountModal .btn-close:focus{
+  box-shadow: 0 0 0 0.2rem var(--aa-primary-weak);
+}
+
+.modal-backdrop.show{
+  opacity: 0.45;
+}
+
+#deleteAccountModal #deleteConfirmInput:focus{
+  border-color: var(--aa-danger);
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.18);
+}
+
+#deleteAccountModal .modal-content{
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+}
+
+.dangerZone{
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(220,38,38,0.25);
+  background: rgba(220,38,38,0.04);
+}
+
+.dangerTitle{
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--aa-danger);
+}
+
+.dangerText{
+  margin: 0 0 12px;
+  color: rgba(15, 23, 42, 0.65);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 65ch;
+}
+
+.dangerBtn{
+  border-radius: 12px;
+  border: 1px solid rgba(220,38,38,0.6);
+  color: var(--aa-danger);
+  background: transparent;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+.dangerBtn:hover{
+  background: rgba(220,38,38,0.08);
+}
+.dangerBtn:focus{
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.18);
+  outline: none;
+}
+
+.dangerZone{
+  grid-column: 1 / -1;
+}

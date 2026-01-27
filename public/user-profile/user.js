@@ -1,3 +1,26 @@
+/*
+  Profile behaviour:
+  - Inline form feedback (#formFeedback) for errors only
+  - Toast (top-right under navbar) for success + redirecting
+  - No alert()
+
+  Prefill behaviour:
+  - On page load, GET /api/user/me and prefill fields if present
+  - Do not block the page if prefill fails
+
+  Update behaviour:
+  - Only send fields that actually changed
+
+  Delete profile behaviour:
+  - Uses DELETE /api/user/me
+  - Requires typing DELETE to confirm
+  - On success clears localStorage and redirects to /signup
+
+  Navbar behaviour:
+  - Navbar is handled by /shared/navbar-user.js
+  - This file only updates localStorage (aa_user_name) after a successful save
+*/
+
 let originalProfile = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -5,7 +28,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   const saveBtn = document.getElementById("saveProfileBtn");
   const toastContainer = document.getElementById("aaToastContainer");
 
+  const openDeleteBtn = document.getElementById("openDeleteAccountBtn");
+  const deleteModalEl = document.getElementById("deleteAccountModal");
+  const confirmDeleteBtn = document.getElementById("confirmDeleteAccountBtn");
+  const deleteConfirmInput = document.getElementById("deleteConfirmInput");
+
   if (!form) return;
+
+  wireDeleteAccount({
+    openDeleteBtn,
+    deleteModalEl,
+    confirmDeleteBtn,
+    deleteConfirmInput,
+    toastContainer,
+  });
 
   // Prefill from API
   try {
@@ -66,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /* -----------------------------
-   Toast helper (success only)
+   Toast helper
 -------------------------------- */
 
 function escapeHtml(str) {
@@ -102,7 +138,7 @@ function showToast({ container, message, variant = "info", autohideMs = 3000 }) 
 }
 
 /* -----------------------------
-   UI helpers (inline feedback for errors only)
+   UI helpers
 -------------------------------- */
 
 function showFormMessage(message, type = "danger") {
@@ -200,7 +236,6 @@ function fillProfileForm(user) {
     const el = document.getElementById(id);
     if (!el) return;
     if (value === null || value === undefined) return;
-
     if (document.activeElement === el) return;
 
     const next = String(value).trim();
@@ -226,9 +261,7 @@ function fillProfileForm(user) {
 
 async function updateProfile(profile) {
   const token = localStorage.getItem("token");
-  if (!token) {
-    throw new Error("You’re logged out. Please log in again.");
-  }
+  if (!token) throw new Error("You’re logged out. Please log in again.");
 
   let res;
   try {
@@ -254,4 +287,94 @@ async function updateProfile(profile) {
   }
 
   return data;
+}
+
+/* -----------------------------
+   Delete profile
+-------------------------------- */
+
+function wireDeleteAccount({ openDeleteBtn, deleteModalEl, confirmDeleteBtn, deleteConfirmInput, toastContainer }) {
+  if (!openDeleteBtn || !deleteModalEl || !confirmDeleteBtn || !deleteConfirmInput) return;
+  if (!window.bootstrap?.Modal) return;
+
+  const modal = new window.bootstrap.Modal(deleteModalEl);
+
+  function resetModal() {
+    deleteConfirmInput.value = "";
+    confirmDeleteBtn.disabled = true;
+    confirmDeleteBtn.textContent = "Permanently delete";
+  }
+
+  openDeleteBtn.addEventListener("click", () => {
+    resetModal();
+    modal.show();
+    setTimeout(() => deleteConfirmInput.focus(), 150);
+  });
+
+  deleteConfirmInput.addEventListener("input", () => {
+    const ok = deleteConfirmInput.value.trim().toUpperCase() === "DELETE";
+    confirmDeleteBtn.disabled = !ok;
+  });
+
+  confirmDeleteBtn.addEventListener("click", async () => {
+    confirmDeleteBtn.disabled = true;
+    confirmDeleteBtn.textContent = "Deleting…";
+
+    try {
+      await deleteMyAccount();
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("aa_user_name");
+      localStorage.removeItem("sensitivity_ui");
+      localStorage.removeItem("effectiveTriggerAqi");
+      localStorage.removeItem("thresholds");
+
+      showToast({
+        container: toastContainer,
+        variant: "success",
+        message: "Your profile has been deleted. Redirecting…",
+        autohideMs: 2000,
+      });
+
+      modal.hide();
+
+      setTimeout(() => {
+        window.location.replace("/signup");
+      }, 600);
+    } catch (err) {
+      console.error("Delete account error:", err);
+      showFormMessage(err.message || "Could not delete your profile. Please try again.", "danger");
+
+      confirmDeleteBtn.textContent = "Permanently delete";
+      confirmDeleteBtn.disabled = deleteConfirmInput.value.trim().toUpperCase() !== "DELETE";
+    }
+  });
+
+  deleteModalEl.addEventListener("hidden.bs.modal", resetModal);
+}
+
+async function deleteMyAccount() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("You’re logged out. Please log in again.");
+
+  let res;
+  try {
+    res = await fetch(`${window.API_BASE}/api/user/me`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (_) {
+    throw new Error("Unable to reach the server. Please try again.");
+  }
+
+  if (res.status === 204) return;
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Your session has expired. Please log in again.");
+    }
+    throw new Error(data?.error || data?.message || `Delete failed (${res.status})`);
+  }
 }

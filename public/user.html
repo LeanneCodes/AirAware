@@ -172,12 +172,56 @@
             <div class="actions">
               <button id="saveProfileBtn" class="btnPrimary" type="submit">Save profile</button>
             </div>
+
+            <!-- Danger zone -->
+            <section class="dangerZone">
+              <h2 class="dangerTitle">Danger zone</h2>
+              <p class="dangerText">
+                Deleting your profile permanently removes your account and associated data. This cannot be undone.
+              </p>
+
+              <button type="button" id="openDeleteAccountBtn" class="dangerBtn">
+                Delete profile
+              </button>
+            </section>
+
           </form>
         </div>
       </div>
     </div>
   </main>
 
+  <!-- Delete profile confirmation modal -->
+  <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="mb-2">
+            This will permanently delete your profile and all associated data. This cannot be undone.
+          </p>
+
+          <label for="deleteConfirmInput" class="form-label">
+            Type <strong>DELETE</strong> to confirm:
+          </label>
+          <input id="deleteConfirmInput" class="form-control" type="text" autocomplete="off" placeholder="DELETE" />
+
+          <div class="form-text">This is a safety step to prevent accidental deletion.</div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn" disabled>
+            Permanently delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="border-top mt-auto" style="background: rgba(255, 255, 255, 0.7);">
