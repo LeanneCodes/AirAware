@@ -7,7 +7,12 @@
   --aa-shadow:0 12px 24px rgba(15,23,42,.06);
   --aa-radius:16px;
   --aa-radius-sm:12px;
+
+  --aa-primary-weak: rgba(24,95,133,0.12);
+  --aa-danger: #c1121f;
+  --aa-danger-weak: rgba(193,18,31,0.12);
 }
+
 
 body{ background:var(--aa-bg); }
 body.page{ min-height:100vh; display:flex; flex-direction:column; }
@@ -301,6 +306,8 @@ main.dash{ flex:1; }
 #savedSearches {
   max-height: 320px;
   overflow-y: auto;
+  border-top: 1px solid var(--aa-border);
+  border-bottom: 1px solid var(--aa-border);
 }
 
 #savedSearches::-webkit-scrollbar {
@@ -313,6 +320,54 @@ main.dash{ flex:1; }
 #savedSearches::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Saved searches list: show ~5 items then scroll */
+#savedSearches{
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+/* Recent alerts: scroll if it grows */
+#recentAlerts{
+  max-height: 320px; /* you can change this if you want it shorter */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+/* Firefox (both) */
+#savedSearches,
+#recentAlerts{
+  scrollbar-width: auto;
+  scrollbar-color: var(--aa-primary, #0b5f85) rgba(11,95,133,0.15);
+}
+
+/* WebKit (Chrome, Edge, Safari) — both */
+#savedSearches::-webkit-scrollbar,
+#recentAlerts::-webkit-scrollbar{
+  width: 12px;
+}
+
+#savedSearches::-webkit-scrollbar-track,
+#recentAlerts::-webkit-scrollbar-track{
+  background: rgba(24,95,133,0.14);
+  border-radius: 999px;
+}
+
+#savedSearches::-webkit-scrollbar-thumb,
+#recentAlerts::-webkit-scrollbar-thumb{
+  background: rgba(24,95,133,0.70);
+  border-radius: 999px;
+  border: 3px solid rgba(24,95,133,0.14);
+}
+
+#savedSearches::-webkit-scrollbar-thumb:hover,
+#recentAlerts::-webkit-scrollbar-thumb:hover{
+  background: rgba(24,95,133,0.88);
+}
+
 
 /* Overall mini meter */
 .aq-meter {
@@ -493,10 +548,6 @@ main.dash{ flex:1; }
   color: #b42318; /* muted red */
 }
 
-.recoList--alert li {
-  /* subtle emphasis only when alert is active */
-}
-
 .recoFoot {
   margin-top: 10px;
   padding-top: 10px;
@@ -513,3 +564,110 @@ main.dash{ flex:1; }
   content: "⚠ ";
 }
 
+.reco-scroll{
+  max-height: 300px;
+  overflow-y: scroll; /* forces scrollbar space (even when not scrolling) */
+  overflow-x: hidden;
+  scrollbar-gutter: stable; /* keeps layout stable where supported */
+  padding-right: 10px;  /* avoids text sitting under scrollbar */
+}
+
+/* Firefox */
+.reco-scroll{
+  scrollbar-width: auto; /* makes it more visible than 'thin' */
+  scrollbar-color: var(--aa-primary, #0b5f85) rgba(11,95,133,0.15);
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+.reco-scroll::-webkit-scrollbar{
+  width: 12px; /* thicker = more obvious */
+}
+.reco-scroll::-webkit-scrollbar-track{
+  background: rgba(11,95,133,0.12);
+  border-radius: 999px;
+}
+.reco-scroll::-webkit-scrollbar-thumb{
+  background: rgba(11,95,133,0.65);
+  border-radius: 999px;
+  border: 3px solid rgba(11,95,133,0.12); /* gives a “pill” thumb */
+}
+.reco-scroll::-webkit-scrollbar-thumb:hover{
+  background: rgba(11,95,133,0.85);
+}
+
+/* Modal: overall look */
+#aa-confirm,
+#confirmDeleteModal .modal-content{
+  border: 1px solid var(--aa-border);
+  border-radius: 18px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+
+/* Header accent */
+#confirmDeleteModal .modal-header{
+  border-bottom: 1px solid var(--aa-border);
+  background: linear-gradient(0deg, #fff, #fff);
+  position: relative;
+}
+
+#confirmDeleteModal .modal-header::before{
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+}
+
+/* Title */
+#confirmDeleteModal .modal-title{
+  color: var(--aa-primary);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Body text */
+#confirmDeleteModal .modal-body{
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+/* Footer */
+#confirmDeleteModal .modal-footer{
+  border-top: 1px solid var(--aa-border);
+  background: rgba(11,95,133,0.04);
+}
+
+/* Buttons: brand cancel + destructive remove */
+#confirmDeleteModal .btn-outline-secondary{
+  border-color: rgba(11,95,133,0.35);
+  color: var(--aa-primary);
+  font-weight: 700;
+}
+#confirmDeleteModal .btn-outline-secondary:hover{
+  background: var(--aa-primary-weak);
+  border-color: rgba(11,95,133,0.55);
+  color: var(--aa-primary);
+}
+
+/* Destructive button */
+#confirmDeleteBtn.btn-danger{
+  background: var(--aa-danger);
+  border-color: var(--aa-danger);
+  font-weight: 800;
+}
+#confirmDeleteBtn.btn-danger:hover{
+  filter: brightness(0.95);
+}
+#confirmDeleteBtn.btn-danger:active{
+  filter: brightness(0.9);
+}
+
+/* Focus rings (brand) */
+#confirmDeleteModal .btn:focus,
+#confirmDeleteModal .btn-close:focus{
+  box-shadow: 0 0 0 0.2rem var(--aa-primary-weak);
+}
+
+.modal-backdrop.show{
+  opacity: 0.45;
+}

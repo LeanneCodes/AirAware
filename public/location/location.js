@@ -1,48 +1,47 @@
 /*
-  What this page does:
-  1) Lets the user save ONE location input: either a city OR a postcode (not both)
-  2) Calls backend endpoints to:
-     - GET current saved location (if any)
-     - POST/PATCH to save/update location
-     - DELETE to clear location
-  3) Redirects to /dashboard after a successful save/update
+  Location Settings UX upgrade
+
+  Notes:
+  - Toasts are used for meaningful user feedback (save/update + redirect, general failures).
+  - Clear & choose again is a UI reset. It should not show a toast.
+  - DELETE /api/location is only called if we believe a saved location exists.
+  - “API route not found” (or similar backend noise) is never shown to the user during clear.
+  - Clear button is disabled when both fields are empty.
+  - Validation does not show a toast directly; the submit handler shows a single toast.
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   /* -----------------------------
      1) DOM elements + constants
   -------------------------------- */
-
   const form = document.querySelector("#locationForm");
   const cityInput = document.querySelector("#cityInput");
   const postcodeInput = document.querySelector("#postcodeInput");
   const clearBtn = document.querySelector("#clearBtn");
-  const successEl = document.querySelector("#saveSuccess");
+
+  const toastContainer = document.getElementById("aaToastContainer");
 
   const API_BASE = "/api/location";
   const REDIRECT_DELAY_MS = 800;
 
-  /* -----------------------------
-     2) Small helpers (simple + reusable)
-  -------------------------------- */
+  // Track busy state so syncDisableState doesn't re-enable clearBtn mid-request
+  let isBusy = false;
 
-  // Pause helper so we can show a success message briefly before redirecting.
+  // Track whether a saved location exists (so "Clear" doesn't hit DELETE unnecessarily)
+  let hasSavedLocation = false;
+
+  if (!form || !cityInput || !postcodeInput || !clearBtn) {
+    console.error("Location page is missing required elements.");
+    return;
+  }
+
+  /* -----------------------------
+     2) Small helpers
+  -------------------------------- */
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  function showSuccess(msg) {
-    if (!successEl) return;
-    successEl.textContent = msg;
-    successEl.style.display = "block";
-  }
-
-  function hideSuccess() {
-    if (!successEl) return;
-    successEl.style.display = "none";
-  }
-
-  // Read token. If missing, user is not logged in, so send them to /login.
   function getTokenOrRedirect() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -52,25 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return token;
   }
 
-  /*
-    Normalising input:
-    We keep it light because we do not want to "correct" what a user types.
-    We only:
-    - trim spaces
-    - collapse multiple spaces into one
-  */
   function normaliseCity(raw) {
     return raw.trim().replace(/\s+/g, " ");
   }
 
-  /*
-    UK postcode normalising (lightweight):
-    - trim
-    - uppercase
-    - collapse multiple spaces
-    - insert a space before the last 3 characters if user did not add one
-      Example: "SW1P1RT" -> "SW1P 1RT"
-  */
   function normalisePostcode(raw) {
     let pc = raw.trim().toUpperCase().replace(/\s+/g, " ");
     if (!pc.includes(" ") && pc.length > 3) {
@@ -79,14 +63,64 @@ document.addEventListener("DOMContentLoaded", () => {
     return pc;
   }
 
-  /*
-    syncDisableState:
-    We only want the user to fill in ONE of the two inputs.
-    Behaviour:
-    - If city is typed, disable postcode input
-    - If postcode is typed, disable city input
-    - If both empty, enable both
-  */
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function showToast({ title = "AirAware+", message, variant = "info", autohideMs = 3500 }) {
+    if (!toastContainer || !window.bootstrap?.Toast) return;
+
+    const toastEl = document.createElement("div");
+    toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+    toastEl.setAttribute("role", "status");
+    toastEl.setAttribute("aria-live", "polite");
+    toastEl.setAttribute("aria-atomic", "true");
+
+    toastEl.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">
+          <strong class="me-1">${escapeHtml(title)}:</strong> ${escapeHtml(message)}
+        </div>
+        <button
+          type="button"
+          class="btn-close btn-close-white me-2 m-auto"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+        ></button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toastEl);
+
+    const toast = new window.bootstrap.Toast(toastEl, {
+      delay: autohideMs,
+      autohide: true,
+    });
+
+    toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+    toast.show();
+  }
+
+  function setBusy(nextBusy) {
+    isBusy = nextBusy;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = nextBusy;
+      submitBtn.textContent = nextBusy ? "Saving..." : "Save location";
+    }
+
+    clearBtn.disabled = nextBusy;
+
+    cityInput.readOnly = nextBusy;
+    postcodeInput.readOnly = nextBusy;
+  }
+
   function syncDisableState() {
     const city = cityInput.value.trim();
     const post = postcodeInput.value.trim();
@@ -101,40 +135,35 @@ document.addEventListener("DOMContentLoaded", () => {
       cityInput.disabled = false;
       postcodeInput.disabled = false;
     }
+
+    // Disable clear button when both inputs are empty (do not override busy state)
+    if (!isBusy) {
+      clearBtn.disabled = !(city || post);
+    }
   }
 
-  /*
-    getPayload:
-    Creates the request body we send to the backend.
+  function makeValidationError(message) {
+    const err = new Error(message);
+    err.isValidation = true;
+    return err;
+  }
 
-    Rules:
-    - Must include exactly one of: { city } OR { postcode }
-    - Throws an error if user input is invalid (so caller can show alert)
-  */
-  function getPayload() {
+  function validateAndBuildPayload() {
     const city = normaliseCity(cityInput.value);
     const postcode = normalisePostcode(postcodeInput.value);
 
+    // Important: do not show toasts here, only throw a validation error.
     if (!city && !postcode) {
-      throw new Error("Please enter either a city or a postcode.");
+      throw makeValidationError("Please enter either a city or a postcode.");
     }
 
     if (city && postcode) {
-      throw new Error("Please use only one: city OR postcode.");
+      throw makeValidationError("Please use only one field: city OR postcode.");
     }
 
-    // We deliberately do not rewrite the input box values (UX choice).
-    // We only send the cleaned value to the API.
     return city ? { city } : { postcode };
   }
 
-  /*
-    apiFetch:
-    - Adds auth token automatically
-    - Sends JSON (Content-Type)
-    - Parses JSON response safely
-    - Throws a meaningful error if backend returns non-OK
-  */
   async function apiFetch(path, options = {}) {
     const token = getTokenOrRedirect();
     if (!token) return null;
@@ -152,55 +181,53 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      throw new Error(data.error || data.message || `Request failed (${res.status})`);
+      const msg = data.error || data.message || `Request failed (${res.status})`;
+      const err = new Error(msg);
+      err.status = res.status;
+      throw err;
     }
 
     return data;
   }
 
-  /* -----------------------------
-     3) Page actions (API workflows)
-  -------------------------------- */
+  function isNotFoundError(err) {
+    const msg = String(err?.message || "").toLowerCase();
+    return (
+      err?.status === 404 ||
+      msg.includes("not found") ||
+      msg.includes("could not find") ||
+      msg.includes("unknown city") ||
+      msg.includes("invalid postcode")
+    );
+  }
 
-  /*
-    loadExistingLocation:
-    - Calls GET /api/location
-    - If a location exists, show it to the user in the success banner
-    - Clear inputs so the user starts fresh
-  */
+  /* -----------------------------
+     3) API workflows
+  -------------------------------- */
   async function loadExistingLocation() {
     try {
       const data = await apiFetch(API_BASE);
-      if (!data?.location) return;
 
-      showSuccess(`Current saved location: ${data.location.label}`);
+      if (data?.location) {
+        hasSavedLocation = true;
+        showToast({ variant: "info", message: `Current saved location: ${data.location.label}` });
+      } else {
+        hasSavedLocation = false;
+      }
 
-      // We clear the inputs because the saved location is already displayed above.
-      // This also avoids confusion about "is the value already submitted?"
       cityInput.value = "";
       postcodeInput.value = "";
       syncDisableState();
     } catch (err) {
-      // Some backends might return a message like "No saved location".
-      // That is not an error for us, so we ignore it.
-      if (String(err.message).toLowerCase().includes("no saved location")) return;
+      const msg = String(err.message || "").toLowerCase();
+      if (msg.includes("no saved location")) return;
 
       console.error("Load location error:", err);
     }
   }
 
-  /*
-    saveLocation:
-    - Builds payload from input
-    - Tries POST first (create)
-    - If POST fails, tries PATCH (update) as a fallback
-
-    Why do this:
-    - Some APIs may only allow POST once, then require PATCH to change it
-    - This keeps the front-end simple without having to know server state
-  */
   async function saveLocation() {
-    const payload = getPayload();
+    const payload = validateAndBuildPayload();
 
     try {
       const data = await apiFetch(API_BASE, {
@@ -208,6 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload),
       });
 
+      hasSavedLocation = true;
       return { action: "saved", label: data?.location?.label || null };
     } catch {
       const data = await apiFetch(API_BASE, {
@@ -215,78 +243,98 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload),
       });
 
+      hasSavedLocation = true;
       return { action: "updated", label: data?.location?.label || null };
     }
   }
 
-  /*
-    clearLocation:
-    - Clears the input fields
-    - Sends DELETE /api/location to remove the saved location
-    - Shows a success banner
-  */
   async function clearLocation() {
     cityInput.value = "";
     postcodeInput.value = "";
     syncDisableState();
 
-    await apiFetch(API_BASE, { method: "DELETE" });
-    showSuccess("Location successfully cleared.");
+    if (!hasSavedLocation) return;
+
+    try {
+      await apiFetch(API_BASE, { method: "DELETE" });
+      hasSavedLocation = false;
+    } catch (err) {
+      console.warn("Clear location API call failed (suppressed):", err?.message);
+      hasSavedLocation = false;
+    }
   }
 
   /* -----------------------------
-     4) Event listeners (user actions)
+     4) Events
   -------------------------------- */
-
   cityInput.addEventListener("input", () => {
-    hideSuccess();
     syncDisableState();
   });
 
   postcodeInput.addEventListener("input", () => {
-    hideSuccess();
     syncDisableState();
   });
 
-  // Form submit: save location then redirect to dashboard
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    hideSuccess();
+    setBusy(true);
 
     try {
       const result = await saveLocation();
+      const labelText = result.label ? `: ${result.label}` : "";
 
-      if (result.label) {
-        showSuccess(`Location ${result.action} as: ${result.label}`);
-      } else {
-        showSuccess(`Location ${result.action} successfully.`);
-      }
+      showToast({
+        variant: "success",
+        message: `Location ${result.action}${labelText}. Redirecting…`,
+        autohideMs: 2200,
+      });
 
-      // Small delay so user sees feedback before navigation
       await sleep(REDIRECT_DELAY_MS);
-
       window.location.replace("/dashboard");
     } catch (err) {
-      alert(err.message);
+      console.error(err);
+
+      if (err?.isValidation) {
+        showToast({
+          variant: "warning",
+          message: err.message || "Please check your inputs and try again.",
+          autohideMs: 3500,
+        });
+      } else if (isNotFoundError(err)) {
+        showToast({
+          variant: "warning",
+          message: err.message || "We couldn’t find that location. Please check and try again.",
+          autohideMs: 4500,
+        });
+      } else {
+        showToast({
+          variant: "danger",
+          message: err.message || "Something went wrong. Please try again.",
+          autohideMs: 4500,
+        });
+      }
+
+      setBusy(false);
+      syncDisableState();
     }
   });
 
-  // Clear button: delete saved location
   clearBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    hideSuccess();
+    if (clearBtn.disabled) return;
 
+    setBusy(true);
     try {
       await clearLocation();
-    } catch (err) {
-      alert(err.message);
+    } finally {
+      setBusy(false);
+      syncDisableState();
     }
   });
 
   /* -----------------------------
-     5) Initial setup on page load
+     5) Init
   -------------------------------- */
-
   syncDisableState();
   loadExistingLocation();
 });

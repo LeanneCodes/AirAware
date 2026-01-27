@@ -103,7 +103,7 @@ body.page {
   border-radius: 18px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(8px);
-  padding: 2rem 2rem 1.75rem;
+  padding: 2rem;
 }
 @media (max-width: 575.98px) {
   .card {
@@ -266,4 +266,37 @@ body.page {
   background-color: rgba(24, 95, 133, 0.15);
   color: #134e6d;
   text-decoration: none;
+}
+
+/* Secondary button (AirAware brand) */
+.btnSecondary{
+  border: 1px solid rgba(24,95,133,.35);
+  background: rgba(24,95,133,.06);
+  color: #185f85;
+  border-radius: 14px;
+  padding: .65rem 1rem;
+  font-weight: 700;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.btnSecondary:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15,23,42,.06);
+  background: rgba(24,95,133,.10);
+}
+
+.btnSecondary:disabled{
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Only inline message we show (city/postcode not found) */
+.notFoundMessage{
+  margin: 6px 0 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #b42318; /* calm red */
 }

@@ -14,7 +14,6 @@
   />
 
   <link rel="stylesheet" href="/dashboard/style.css">
-
 </head>
 
 <body class="page">
@@ -25,8 +24,15 @@
         <img src="/assets/airaware-logo-no-whitespace.png" alt="AirAware+" height="50" />
       </a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#airawareNavbar"
-        aria-controls="airawareNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#airawareNavbar"
+        aria-controls="airawareNavbar"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
 
@@ -41,10 +47,12 @@
         <div class="d-flex align-items-center gap-3 ms-lg-4">
           <span class="welcome-text">Welcome, <span id="welcomeUserName">User</span></span>
 
-          <a class="btn btn-outline-aa btn-sm d-flex align-items-center justify-content-center"
-             href="/user"
-             aria-label="Profile"
-             style="width:38px;height:38px;border-radius:50%;">
+          <a
+            class="btn btn-outline-aa btn-sm d-flex align-items-center justify-content-center"
+            href="/user"
+            aria-label="Profile"
+            style="width:38px;height:38px;border-radius:50%;"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
               <path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1Z" />
@@ -55,12 +63,25 @@
     </div>
   </nav>
 
+  <!-- ✅ Global toast container (top-right, below navbar) -->
+  <div
+    id="aaToastContainer"
+    class="toast-container position-fixed top-0 end-0 p-3"
+    style="z-index:1080; margin-top:72px;"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
   <!-- Non-medical disclaimer (visible immediately) -->
   <div class="bg-white border-bottom">
     <div class="container py-2">
       <div class="d-flex gap-2 align-items-start">
         <span class="badge rounded-pill text-bg-warning text-dark mt-1">Important</span>
-        <p class="mb-0 small text-body-secondary"> AirAware+ provides environmental awareness only and is <strong class="text-body">not a medical tool</strong>. It does not provide diagnosis or treatment advice. If you feel unwell or have symptoms, seek guidance from a qualified healthcare professional. </p>
+        <p class="mb-0 small text-body-secondary">
+          AirAware+ provides environmental awareness only and is <strong class="text-body">not a medical tool</strong>.
+          It does not provide diagnosis or treatment advice. If you feel unwell or have symptoms, seek guidance from a
+          qualified healthcare professional.
+        </p>
       </div>
     </div>
   </div>
@@ -240,16 +261,18 @@
                     <div class="pollValue" id="coValue">—</div>
                     <div class="pollStatus" id="coStatus">—</div>
                   </article>
-                </div>
 
+                </div>
               </div>
             </div>
 
+            <!-- Recommendations -->
             <aside class="aa-card" aria-label="Recommendations">
               <div class="aa-card-header">
                 <h2 class="aa-card-title">Recommendations</h2>
               </div>
-              <div class="aa-card-body" id="recommendations">
+
+              <div class="aa-card-body reco-scroll" id="recommendations" aria-label="Recommendations list">
                 <div class="recoTitle">NHS recommendations</div>
                 <div class="recoLine">xxx</div>
                 <div class="recoLine">xxx</div>
@@ -258,21 +281,21 @@
             </aside>
           </section>
 
-          <!-- Charts: supports 1–N graphs (Databricks embeds as iframes) -->
+          <!-- Charts -->
           <section class="aa-card" aria-label="Charts">
             <div class="aa-card-header">
               <h2 class="aa-card-title">Trends</h2>
+
+              <div class="data-source-inline">
+                <span class="data-source-label">Data source:</span>
+                <span class="data-source-name">OpenWeather</span>
+              </div>
             </div>
             <div class="aa-card-body">
               <div class="charts-grid" id="chartsGrid">
-                <!-- Replace placeholders with Databricks iframes when ready -->
                 <div class="chart-placeholder">Graph placeholder 1 (Databricks embed)</div>
                 <div class="chart-placeholder">Graph placeholder 2 (Databricks embed)</div>
                 <div class="chart-placeholder">Graph placeholder 3 (Databricks embed)</div>
-
-                <!-- Example iframe (uncomment and replace src):
-                <iframe class="chartFrame" src="PASTE_DATABRICKS_EMBED_URL"></iframe>
-                -->
               </div>
             </div>
           </section>
@@ -301,6 +324,32 @@
       </div>
     </div>
   </footer>
+
+  <!-- ✅ Keep modal (destructive actions) -->
+  <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Remove saved location?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="mb-0" id="confirmDeleteText">
+            Are you sure you want to remove this location from saved searches?
+          </p>
+          <p class="small text-body-secondary mb-0 mt-2">
+            This only removes the saved search. It won’t affect your account or thresholds.
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="/dashboard/dashboard.js" defer></script>
 
