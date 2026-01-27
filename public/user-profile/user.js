@@ -187,7 +187,6 @@ async function updateProfile(profile) {
 
   return data;
 }
-<<<<<<< HEAD
 
 
 async function loadNavbarUser() {
@@ -216,5 +215,3 @@ async function loadNavbarUser() {
     el.textContent = "User";
   }
 }
-=======
->>>>>>> 1c20203251b091a0ddb247b0e8757103cffd7bab

@@ -569,15 +569,6 @@ function safeLink(url, text) {
   `;
 }
 
-<<<<<<< HEAD
-    els.recommendations.innerHTML = `
-      ${header}
-      ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
-    `;
-  }
- 
-=======
->>>>>>> 1c20203251b091a0ddb247b0e8757103cffd7bab
 function renderAlerts(payload) {
   if (!els.recentAlerts) return;
 
