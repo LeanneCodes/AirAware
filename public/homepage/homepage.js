@@ -108,7 +108,6 @@ async function refreshHomepageSnapshot(tokenKey) {
 function renderHomepage(payload) {
   const { location, user, status, current } = payload || {};
 
-  renderWelcomeUser(user);
   renderSensitivity(user, payload?.thresholds);
   renderSnapshot(current, status, payload?.thresholds);
   renderLocationSection(location);
@@ -252,18 +251,6 @@ function uiLabelFromTriggerIdx(triggerIdx) {
 /* -----------------------------
    5) Render: welcome, sensitivity, snapshot
 -------------------------------- */
-
-function renderWelcomeUser(user) {
-  const el = document.getElementById("welcomeUserName");
-  if (!el) return;
-
-  const name =
-    user?.first_name ||
-    (user?.email ? String(user.email).split("@")[0] : null) ||
-    "User";
-
-  el.textContent = name;
-}
 
 function renderSensitivity(user, thresholds) {
   const triggerIdx = thresholds?.effective_trigger_aqi ?? null;

@@ -47,7 +47,13 @@
         </ul>
 
         <div class="d-flex align-items-center gap-3 ms-lg-4">
-          <span class="welcome-text"> Welcome, <span id="welcomeUserName">User</span></span>
+          <span class="welcome-text"> Welcome, <span id="welcomeUserName"></span><a href="#" id="logoutLink" class="logout-link">(Log out)</a></span>
+          <script>
+                try {
+                  const n = localStorage.getItem("aa_user_name");
+                  if (n) document.getElementById("welcomeUserName").textContent = n;
+                } catch (e) {}
+              </script>
 
           <a
             class="btn btn-outline-aa btn-sm d-flex align-items-center justify-content-center"
@@ -161,7 +167,8 @@
   </footer>
 
   <script src="/shared/config.js"></script>
-  <script src="/location/location.js"></script>
+  <script src="/shared/navbar-user.js" defer></script>
+  <script src="/location/location.js" defer></script>
 
   <!-- Bootstrap JS bundle -->
   <script
