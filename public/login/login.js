@@ -181,7 +181,7 @@ async function loginRequest({ email, password }) {
   let res;
 
   try {
-    res = await fetch("/api/auth/login", {
+    res = await fetch(`${window.API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
