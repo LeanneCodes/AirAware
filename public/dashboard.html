@@ -293,9 +293,24 @@
             </div>
             <div class="aa-card-body">
               <div class="charts-grid" id="chartsGrid">
-                <div class="chart-placeholder">Graph placeholder 1 (Databricks embed)</div>
-                <div class="chart-placeholder">Graph placeholder 2 (Databricks embed)</div>
-                <div class="chart-placeholder">Graph placeholder 3 (Databricks embed)</div>
+                <section class="chartPanel" aria-label="Pollutants over time">
+  <div class="trendsGrid">
+    <div class="trendCard">
+      <h3>All pollutants (last 12h)</h3>
+      <canvas id="chartAllPollutants" height="180"></canvas>
+    </div>
+
+    <div class="trendCard">
+      <h3>PM2.5 intensity (last 12h)</h3>
+      <canvas id="chartPm25Heat" height="180"></canvas>
+    </div>
+
+    <div class="trendCard">
+      <h3>AQI (last 12h)</h3>
+      <canvas id="chartAqi" height="180"></canvas>
+    </div>
+  </div>
+</section>
               </div>
             </div>
           </section>
@@ -352,7 +367,9 @@
   </div>
 
   <script src="/shared/config.js"></script>
-  <script src="/dashboard/dashboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/dashboard/dashboard.js" defer></script>
+
 
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
