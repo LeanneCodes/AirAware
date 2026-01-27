@@ -66,7 +66,7 @@ function wireRefreshButton(tokenKey) {
 -------------------------------- */
 
 async function fetchDashboard(token) {
-  const res = await fetch("/api/dashboard", {
+  const res = await fetch(`${window.API_BASE}/api/dashboard`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -77,7 +77,7 @@ async function fetchDashboard(token) {
 }
 
 async function refreshDashboard(token) {
-  const res = await fetch("/api/dashboard/refresh", {
+  const res = await fetch(`${window.API_BASE}/api/dashboard/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
