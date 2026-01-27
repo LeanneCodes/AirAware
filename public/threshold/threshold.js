@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveToApi({ apiSensitivity, token }) {
-    let res = await fetch("/api/thresholds", {
+    let res = await fetch(`${window.API_BASE}/api/thresholds`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (res.status === 404) {
-      res = await fetch("/api/thresholds", {
+      res = await fetch(`${window.API_BASE}/api/thresholds`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

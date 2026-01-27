@@ -163,7 +163,7 @@ async function updateProfile(profile) {
 
   let res;
   try {
-    res = await fetch("/api/user/me", {
+    res = await fetch(`${window.API_BASE}/api/user/me`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

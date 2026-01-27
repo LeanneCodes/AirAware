@@ -21,7 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const toastContainer = document.getElementById("aaToastContainer");
 
-  const API_BASE = "/api/location";
+  const BASE_URL = window.API_BASE || "http://localhost:3000";
+  const LOCATION_API = `${BASE_URL}/api/location`;
+
   const REDIRECT_DELAY_MS = 800;
 
   // Track busy state so syncDisableState doesn't re-enable clearBtn mid-request
@@ -206,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
   -------------------------------- */
   async function loadExistingLocation() {
     try {
-      const data = await apiFetch(API_BASE);
+      const data = await apiFetch(LOCATION_API);
 
       if (data?.location) {
         hasSavedLocation = true;
@@ -230,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const payload = validateAndBuildPayload();
 
     try {
-      const data = await apiFetch(API_BASE, {
+      const data = await apiFetch(LOCATION_API, {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -238,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
       hasSavedLocation = true;
       return { action: "saved", label: data?.location?.label || null };
     } catch {
-      const data = await apiFetch(API_BASE, {
+      const data = await apiFetch(LOCATION_API, {
         method: "PATCH",
         body: JSON.stringify(payload),
       });
@@ -256,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!hasSavedLocation) return;
 
     try {
-      await apiFetch(API_BASE, { method: "DELETE" });
+      await apiFetch(LOCATION_API, { method: "DELETE" });
       hasSavedLocation = false;
     } catch (err) {
       console.warn("Clear location API call failed (suppressed):", err?.message);

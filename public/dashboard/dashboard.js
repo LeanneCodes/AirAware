@@ -13,12 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
   -------------------------------- */
 
   const API = {
-    dashboard: "/api/dashboard",
-    refresh: "/api/dashboard/refresh",
-    locationHistory: "/api/location/history",
-    locationSelect: "/api/location/select",
+    dashboard: `${window.API_BASE}/api/dashboard`,
+    refresh: `${window.API_BASE}/api/dashboard/refresh`,
+    locationHistory: `${window.API_BASE}/api/location/history`,
+    locationSelect: `${window.API_BASE}/api/location/select`,
     // IMPORTANT: delete is now DELETE /api/location/:id
-    locationDeleteBase: "/api/location",
+    locationDeleteBase: `${window.API_BASE}/api/location`,
   };
 
   const els = {
