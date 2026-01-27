@@ -145,7 +145,102 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let locationsHistory = [];
   let activeLocation = null;
+  /* -----------------------------
+     2.5) Trends charts (last 12h)
+  -------------------------------- */
 
+  let chartAllPollutants = null;
+  let chartPm25Heat = null;
+  let chartAqi = null;
+
+  function cityQueryFromLabel(label) {
+    // "London, GB" -> "London,GB"
+    return String(label || "").replace(/\s/g, "");
+  }
+
+  async function fetchTrends(hours = 12) {
+    const token = getTokenOrRedirect();
+    if (!token) return null;
+
+    const label = activeLocation?.label || els.locationName?.textContent || "London,GB";
+    const city = cityQueryFromLabel(label);
+
+    const res = await fetch(`/api/air/trends?city=${encodeURIComponent(city)}&hours=${hours}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.message || "Failed to load trends");
+
+    const points = (data.points || []).filter(p => p.ts).sort((a, b) => a.ts - b.ts);
+    return points;
+  }
+
+  function renderTrendCharts(points) {
+    const labels = points.map(p =>
+      new Date(p.ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+    );
+
+    // 1) All pollutants (line)
+    const c1 = document.getElementById("chartAllPollutants");
+    if (c1) {
+      if (chartAllPollutants) chartAllPollutants.destroy();
+      chartAllPollutants = new Chart(c1.getContext("2d"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "PM2.5", data: points.map(p => p.pm25) },
+            { label: "PM10",  data: points.map(p => p.pm10) },
+            { label: "NO2",   data: points.map(p => p.no2) },
+            { label: "O3",    data: points.map(p => p.o3) },
+            { label: "SO2",   data: points.map(p => p.so2) },
+            { label: "CO",    data: points.map(p => p.co) },
+          ],
+        },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+      });
+    }
+
+    // 2) PM2.5 intensity (bar)
+    const c2 = document.getElementById("chartPm25Heat");
+    if (c2) {
+      if (chartPm25Heat) chartPm25Heat.destroy();
+      chartPm25Heat = new Chart(c2.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{ label: "PM2.5", data: points.map(p => p.pm25) }],
+        },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+      });
+    }
+
+    // 3) AQI (line)
+    const c3 = document.getElementById("chartAqi");
+    if (c3) {
+      if (chartAqi) chartAqi.destroy();
+      chartAqi = new Chart(c3.getContext("2d"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "AQI", data: points.map(p => p.aqi) }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: "bottom" } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        },
+      });
+    }
+  }
+
+  async function refreshTrends() {
+    try {
+      const points = await fetchTrends(12);
+      if (!points) return;
+      renderTrendCharts(points);
+    } catch (err) {
+      console.error("Trends error:", err.message);
+    }
+  }
   /* -----------------------------
      3) Helpers
   -------------------------------- */
@@ -739,6 +834,8 @@ function renderAlerts(payload) {
     renderRecommendations(payload);
     renderAlerts(payload);
 
+    await refreshTrends();
+
     await loadLocationHistory();
     renderSavedSearches();
   }
@@ -755,6 +852,8 @@ function renderAlerts(payload) {
     renderPollutants(payload);
     renderRecommendations(payload);
     renderAlerts(payload);
+
+    await refreshTrends();
 
     await loadLocationHistory();
     renderSavedSearches();
@@ -789,6 +888,8 @@ function renderAlerts(payload) {
       }
 
       await loadDashboard();
+            // refresh trends every 5 minutes
+      setInterval(refreshTrends, 5 * 60 * 1000);
     } catch (err) {
       console.error(err);
       alert(err.message || "Dashboard failed to load.");

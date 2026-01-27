@@ -11,6 +11,7 @@ const thresholdRouter = require('./routers/thresholdRoutes');
 const dashboardRouter = require('./routers/dashboardRoutes');
 const locationRouter = require('./routers/locationRoutes');
 
+
 /* Controllers */
 const locationController = require('./controllers/locationController');
 
@@ -75,6 +76,7 @@ app.use('/api/user', authMiddleware, userRouter);
 app.use('/api/thresholds', authMiddleware, thresholdRouter);
 app.use('/api/location', authMiddleware, locationRouter);
 app.use('/api/dashboard', authMiddleware, dashboardRouter);
+app.use('/api/air', require('./routers/air'));
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: 'API route not found' });
