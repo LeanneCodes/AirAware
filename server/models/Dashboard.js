@@ -73,15 +73,25 @@ class Dashboard {
     };
   }
 
-  static async getUser(userId) {
-    const { rows } = await db.query(
-      `SELECT accessibility_mode, analytics_opt_in, accepted_disclaimer_at
-       FROM users
-       WHERE id = $1;`,
-      [userId]
-    );
-    return rows[0] || null;
-  }
+static async getUser(userId) {
+  const { rows } = await db.query(
+    `
+    SELECT
+      id,
+      email,
+      first_name,
+      last_name,
+      accessibility_mode,
+      analytics_opt_in,
+      accepted_disclaimer_at
+    FROM users
+    WHERE id = $1;
+    `,
+    [userId]
+  );
+
+  return rows[0] || null;
+}
 
   static async getCurrentLocation(userId) {
     const { rows } = await db.query(

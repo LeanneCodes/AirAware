@@ -258,7 +258,7 @@ function renderWelcomeUser(user) {
   if (!el) return;
 
   const name =
-    user?.name ||
+    user?.first_name ||
     (user?.email ? String(user.email).split("@")[0] : null) ||
     "User";
 

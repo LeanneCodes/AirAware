@@ -6,6 +6,12 @@ async function getById(userId) {
     SELECT
       id,
       email,
+      first_name,
+      last_name,
+      date_of_birth,
+      sex_at_birth,
+      gender,
+      nationality,
       condition_type,
       sensitivity_level,
       accessibility_mode,
