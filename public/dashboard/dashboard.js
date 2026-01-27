@@ -166,19 +166,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = getTokenOrRedirect();
     if (!token) return null;
 
-    const label = activeLocation?.label || els.locationName?.textContent || "London,GB";
+    const label = activeLocation?.label || els.locationName?.textContent || "London";
     const city = cityQueryFromLabel(label);
 
-    // NOTE: This endpoint is relative (your backend presumably serves it)
-    const res = await fetch(`/api/air/trends?city=${encodeURIComponent(city)}&hours=${hours}`, {
+    const url = `${window.API_BASE}/api/air/trends?city=${encodeURIComponent(city)}&hours=${hours}`;
+
+    const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || data.message || "Failed to load trends");
 
-    const points = (data.points || []).filter((p) => p.ts).sort((a, b) => a.ts - b.ts);
-    return points;
+    if (!res.ok) {
+      console.error("Trends fetch failed:", {
+        url,
+        status: res.status,
+        statusText: res.statusText,
+        body: data,
+      });
+
+      throw new Error(data?.error || data?.message || `Failed to load trends (${res.status})`);
+    }
+
+    return (data.points || []).filter(p => p.ts).sort((a, b) => a.ts - b.ts);
   }
 
   function buildChartOptions(extra = {}) {
