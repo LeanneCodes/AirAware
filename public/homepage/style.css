@@ -231,3 +231,14 @@ body {
 .alert-text::before {
   content: "⚠ ";
 }
+
+.logout-link {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--aa-primary);
+  font-style: italic;
+  padding-left: 0.25rem;
+}
+.logout-link:hover {
+  text-decoration: underline;
+}

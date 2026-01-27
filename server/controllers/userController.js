@@ -1,8 +1,5 @@
 const User = require("../models/User");
 
-const ALLOWED_CONDITIONS = new Set(["asthma", "allergies", "both"]);
-const ALLOWED_SENSITIVITY = new Set(["low", "medium", "high"]);
-
 exports.getMe = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -68,6 +65,21 @@ exports.updateMe = async (req, res) => {
       message: "Profile updated",
       user: updatedUser,
     });
+  } catch (err) {
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+
+exports.deleteMe = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    const deleted = await User.deleteById(userId);
+    if (!deleted) return res.status(404).json({ error: "User not found" });
+
+    // 204 No Content is standard for successful deletes
+    return res.status(204).send();
   } catch (err) {
     return res.status(500).json({ error: "Server error", details: err.message });
   }

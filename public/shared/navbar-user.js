@@ -89,4 +89,22 @@
     .catch(() => {
       // Silent fail: keep cached name and avoid UI flicker
     });
+
+    const logoutLink = document.getElementById("logoutLink");
+    if (logoutLink) {
+      logoutLink.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        // Clear auth + user caches
+        localStorage.removeItem("token");
+        localStorage.removeItem("aa_user_name");
+        localStorage.removeItem("sensitivity_ui");
+        localStorage.removeItem("effectiveTriggerAqi");
+        localStorage.removeItem("thresholds");
+
+        // If you store anything else app-specific, clear it here too
+
+        window.location.replace("/login");
+      });
+    }
 })();

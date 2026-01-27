@@ -77,7 +77,21 @@ async function updateById(userId, updates) {
   return rows[0] || null;
 }
 
+async function deleteById(userId) {
+  const { rows } = await db.query(
+    `
+    DELETE FROM users
+    WHERE id = $1
+    RETURNING id
+    `,
+    [userId]
+  );
+
+  return rows[0] || null;
+}
+
 module.exports = {
   getById,
   updateById,
+  deleteById,
 };

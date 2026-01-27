@@ -191,3 +191,14 @@ body { background: #f1f6fa; }
   color: #134e6d;
   text-decoration: none;
 }
+
+.logout-link {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--aa-primary);
+  font-style: italic;
+  padding-left: 0.25rem;
+}
+.logout-link:hover {
+  text-decoration: underline;
+}
