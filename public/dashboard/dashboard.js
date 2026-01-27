@@ -8,10 +8,10 @@
 */
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadNavbarUser();
   /* -----------------------------
      1) Constants (API routes + DOM elements)
   -------------------------------- */
-
   const API = {
     dashboard: "/api/dashboard",
     refresh: "/api/dashboard/refresh",
@@ -348,7 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ${recs.slice(0, 5).map((r) => `<div class="recoLine">${r.text}</div>`).join("")}
     `;
   }
-  
+ 
 function renderAlerts(payload) {
   if (!els.recentAlerts) return;
 
@@ -530,7 +530,6 @@ function renderAlerts(payload) {
       window.location.replace("/location");
       return;
     }
-
     renderHeader(payload);
     renderPollutants(payload);
     renderRecommendations(payload);
@@ -581,4 +580,35 @@ if (window.bootstrap?.Tooltip) {
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
     new bootstrap.Tooltip(el);
   });
+}
+async function loadNavbarUser() {
+  const el = document.getElementById("welcomeUserName");
+  if (!el) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    el.textContent = "Guest";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/dashboard", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      el.textContent = "User";
+      return;
+    }
+
+    const payload = await res.json();
+    const user = payload.user;
+
+    el.textContent =
+      user?.first_name ||
+      (user?.email ? String(user.email).split("@")[0] : null) ||
+      "User";
+  } catch {
+    el.textContent = "User";
+  }
 }
