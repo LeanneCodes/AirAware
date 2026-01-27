@@ -1,10 +1,20 @@
-document.addEventListener("DOMContentLoaded", () => {
+let originalProfile = null;
 
+document.addEventListener("DOMContentLoaded", async () => {
   const form = document.querySelector(".formGrid");
   const saveBtn = document.getElementById("saveProfileBtn");
   const toastContainer = document.getElementById("aaToastContainer");
 
   if (!form) return;
+
+  // Prefill from API
+  try {
+    const me = await fetchMyProfile();
+    originalProfile = me || null;
+    fillProfileForm(me);
+  } catch (err) {
+    console.warn("Prefill failed:", err?.message || err);
+  }
 
   // Clear error state as user types
   form.querySelectorAll("input, select").forEach((el) => {
@@ -19,18 +29,23 @@ document.addEventListener("DOMContentLoaded", () => {
     setSubmittingState(saveBtn, true);
 
     try {
-      const profileData = readProfileInputs();
+      const profileData = readChangedProfileInputs(originalProfile);
 
       if (Object.keys(profileData).length === 0) {
         setSubmittingState(saveBtn, false);
-        showFormMessage("Please fill in at least one field before saving.", "warning");
+        showFormMessage("No changes to save.", "warning");
         return;
       }
 
       const updated = await updateProfile(profileData);
+      const updatedUser = updated?.user ?? updated;
 
-      // Keep navbar name consistent across pages (cache + update instantly)
-      syncCachedNavbarNameFromUserResponse(updated);
+      fillProfileForm(updatedUser);
+      originalProfile = updatedUser || originalProfile;
+
+      if (updatedUser?.first_name) {
+        localStorage.setItem("aa_user_name", String(updatedUser.first_name));
+      }
 
       showToast({
         container: toastContainer,
@@ -40,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       setTimeout(() => {
-        window.location.href = "/threshold";
+        window.location.replace("/threshold");
       }, 500);
     } catch (err) {
       console.error("Profile update error:", err);
@@ -124,31 +139,89 @@ function setSubmittingState(buttonEl, isSubmitting) {
 }
 
 /* -----------------------------
-   Read inputs (only send filled fields)
+   Prefill + diff helpers
 -------------------------------- */
 
-function readProfileInputs() {
-  const raw = {
-    first_name: document.getElementById("firstName")?.value?.trim(),
-    last_name: document.getElementById("lastName")?.value?.trim(),
-    date_of_birth: document.getElementById("dob")?.value,
-    sex_at_birth: document.getElementById("sexAtBirth")?.value,
-    gender: document.getElementById("gender")?.value,
-    nationality: document.getElementById("nationality")?.value?.trim(),
+async function fetchMyProfile() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("You’re logged out. Please log in again.");
+
+  const res = await fetch(`${window.API_BASE}/api/user/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(data?.details || data?.error || data?.message || `Profile fetch failed (${res.status})`);
+  }
+
+  return data?.user ?? data;
+}
+
+function normaliseDateOnly(value) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
+function readChangedProfileInputs(original) {
+  const current = {
+    first_name: document.getElementById("firstName")?.value?.trim() || "",
+    last_name: document.getElementById("lastName")?.value?.trim() || "",
+    date_of_birth: document.getElementById("dob")?.value || "",
+    sex_at_birth: document.getElementById("sexAtBirth")?.value || "",
+    gender: document.getElementById("gender")?.value || "",
+    nationality: document.getElementById("nationality")?.value?.trim() || "",
   };
 
-  const cleaned = {};
-  for (const [key, value] of Object.entries(raw)) {
-    if (value !== null && value !== "") {
-      cleaned[key] = value;
+  const orig = {
+    first_name: (original?.first_name || "").trim(),
+    last_name: (original?.last_name || "").trim(),
+    date_of_birth: normaliseDateOnly(original?.date_of_birth),
+    sex_at_birth: original?.sex_at_birth || "",
+    gender: original?.gender || "",
+    nationality: (original?.nationality || "").trim(),
+  };
+
+  const updates = {};
+  for (const key of Object.keys(current)) {
+    if (current[key] !== orig[key] && current[key] !== "") {
+      updates[key] = current[key];
     }
   }
 
-  return cleaned;
+  return updates;
+}
+
+function fillProfileForm(user) {
+  if (!user) return;
+
+  const setValue = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (value === null || value === undefined) return;
+
+    if (document.activeElement === el) return;
+
+    const next = String(value).trim();
+    if (!next) return;
+
+    el.value = next;
+  };
+
+  setValue("firstName", user.first_name);
+  setValue("lastName", user.last_name);
+
+  const dob = normaliseDateOnly(user.date_of_birth);
+  if (dob) setValue("dob", dob);
+
+  setValue("sexAtBirth", user.sex_at_birth);
+  setValue("gender", user.gender);
+  setValue("nationality", user.nationality);
 }
 
 /* -----------------------------
-   API call
+   API call (PATCH)
 -------------------------------- */
 
 async function updateProfile(profile) {
@@ -181,28 +254,4 @@ async function updateProfile(profile) {
   }
 
   return data;
-}
-
-/* -----------------------------
-   Navbar user name (no flash)
--------------------------------- */
-
-function getUserFromApiResponse(data) {
-  // Support common shapes:
-  return data?.user || data?.data?.user || data;
-}
-
-function buildDisplayName(user) {
-  if (!user) return null;
-
-  const first =
-    (typeof user.first_name === "string" ? user.first_name.trim() : "") ||
-    (typeof user.name === "string" ? user.name.trim() : "");
-
-  if (first) return first;
-
-  const email = typeof user.email === "string" ? user.email : "";
-  if (email.includes("@")) return email.split("@")[0];
-
-  return null;
 }

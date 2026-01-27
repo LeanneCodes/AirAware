@@ -8,15 +8,10 @@ async function getById(userId) {
       email,
       first_name,
       last_name,
-      date_of_birth,
+      date_of_birth::text AS date_of_birth,
       sex_at_birth,
       gender,
       nationality,
-      condition_type,
-      sensitivity_level,
-      accessibility_mode,
-      analytics_opt_in,
-      accepted_disclaimer_at,
       created_at,
       updated_at
     FROM users
@@ -30,11 +25,6 @@ async function getById(userId) {
 
 async function updateById(userId, updates) {
   const allowedFields = new Set([
-    "condition_type",
-    "sensitivity_level",
-    "accessibility_mode",
-    "analytics_opt_in",
-    "accepted_disclaimer_at",
     "first_name",
     "last_name",
     "date_of_birth",
@@ -51,7 +41,12 @@ async function updateById(userId, updates) {
   let i = 1;
 
   for (const key of keys) {
-    setParts.push(`${key} = $${i}`);
+    // Ensure date-only values are treated as DATE, not timestamp
+    if (key === "date_of_birth") {
+      setParts.push(`${key} = $${i}::date`);
+    } else {
+      setParts.push(`${key} = $${i}`);
+    }
     values.push(updates[key]);
     i++;
   }
@@ -60,14 +55,24 @@ async function updateById(userId, updates) {
   values.push(userId);
 
   const { rows } = await db.query(
-  `
-  UPDATE users
-  SET ${setParts.join(", ")}
-  WHERE id = $${i}
-  RETURNING *
-  `,
-  values
-);
+    `
+    UPDATE users
+    SET ${setParts.join(", ")}
+    WHERE id = $${i}
+    RETURNING
+      id,
+      email,
+      first_name,
+      last_name,
+      date_of_birth::text AS date_of_birth,
+      sex_at_birth,
+      gender,
+      nationality,
+      created_at,
+      updated_at
+    `,
+    values
+  );
 
   return rows[0] || null;
 }
