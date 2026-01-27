@@ -11,6 +11,7 @@
 */
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadNavbarUser();
   /* -----------------------------
      1) DOM elements + constants
   -------------------------------- */
@@ -340,3 +341,29 @@ document.addEventListener("DOMContentLoaded", () => {
   syncDisableState();
   loadExistingLocation();
 });
+async function loadNavbarUser() {
+  const el = document.getElementById("welcomeUserName");
+  if (!el) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) { el.textContent = "Guest"; return; }
+
+  try {
+    const res = await fetch("/api/dashboard", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) { el.textContent = "User"; return; }
+
+    const payload = await res.json();
+    const user = payload.user;
+
+    el.textContent =
+      user?.first_name ||
+      (user?.email ? String(user.email).split("@")[0] : null) ||
+      "User";
+  } catch (e) {
+    console.error("Navbar load failed:", e);
+    el.textContent = "User";
+  }
+}

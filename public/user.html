@@ -46,7 +46,7 @@
         </ul>
 
         <div class="d-flex align-items-center gap-3 ms-lg-4">
-          <span class="welcome-text">Welcome, <span>User</span></span>
+          <span class="welcome-text"> Welcome, <span id="welcomeUserName">User</span></span>
 
           <a
             class="btn btn-outline-aa btn-sm d-flex align-items-center justify-content-center"
@@ -90,81 +90,88 @@
   </section>
 
   <!-- MAIN -->
-  <main class="content container">
-    <form class="formGrid">
-      <!-- Form-level inline feedback -->
-      <div
-        id="formFeedback"
-        class="alert d-none"
-        role="alert"
-        aria-live="polite"
-        style="grid-column: 1 / -1; border-left: 4px solid #185f85;"
-      ></div>
+  <main class="container py-4 py-lg-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-9 col-xl-8">
+        <div class="panel p-3 p-md-4 p-lg-4">
+          <form class="formGrid">
+            <!-- Form-level inline feedback -->
+            <div
+              id="formFeedback"
+              class="alert d-none"
+              role="alert"
+              aria-live="polite"
+              style="grid-column: 1 / -1; border-left: 4px solid #185f85;"
+            ></div>
 
-      <!-- Small explanation box -->
-      <div class="field" style="grid-column: 1 / -1;">
-        <div class="text-uppercase small text-body-secondary mb-2 profile-section-title">
-          Profile details
+            <!-- Small explanation box -->
+            <div class="field" style="grid-column: 1 / -1;">
+              <div class="text-uppercase small text-body-secondary mb-2 profile-section-title">
+                Profile details
+              </div>
+
+              <p class="mb-0 text-body-secondary">
+                These details help AirAware+ personalise what you see in the app (for example, how we present alerts and summaries).
+                You can leave optional fields blank, and you can update them at any time.
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="firstName">First name</label>
+              <input class="lineInput" id="firstName" type="text" autocomplete="given-name" required />
+            </div>
+
+            <div class="field">
+              <label class="label" for="lastName">Last name</label>
+              <input class="lineInput" id="lastName" type="text" autocomplete="family-name" required />
+            </div>
+
+            <div class="field">
+              <label class="label" for="dob">Date of birth</label>
+              <input class="lineInput" id="dob" type="date" autocomplete="bday" required />
+            </div>
+
+            <div class="field">
+              <label class="label" for="sexAtBirth">Sex at birth (optional)</label>
+              <select class="lineInput" id="sexAtBirth">
+                <option value="">Select</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="gender">Gender (optional)</label>
+              <select class="lineInput" id="gender">
+                <option value="">Select</option>
+                <option value="woman">Woman</option>
+                <option value="man">Man</option>
+                <option value="non_binary">Non-binary</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="nationality">Nationality (optional)</label>
+              <input
+                class="lineInput"
+                id="nationality"
+                type="text"
+                placeholder="e.g., British"
+                autocomplete="country-name"
+              />
+            </div>
+
+            <div class="actions">
+              <button id="saveProfileBtn" class="btnPrimary" type="submit">Save profile</button>
+            </div>
+          </form>
         </div>
-
-        <p class="mb-0 text-body-secondary">
-          These details help AirAware+ personalise what you see in the app (for example, how we present alerts and summaries).
-          You can leave optional fields blank, and you can update them at any time.
-        </p>
       </div>
-
-      <div class="field">
-        <label class="label" for="firstName">First name</label>
-        <input class="lineInput" id="firstName" type="text" autocomplete="given-name" required />
-      </div>
-
-      <div class="field">
-        <label class="label" for="lastName">Last name</label>
-        <input class="lineInput" id="lastName" type="text" autocomplete="family-name" required />
-      </div>
-
-      <div class="field">
-        <label class="label" for="dob">Date of birth</label>
-        <input class="lineInput" id="dob" type="date" autocomplete="bday" required />
-      </div>
-
-      <div class="field">
-        <label class="label" for="sexAtBirth">Sex at birth (optional)</label>
-        <select class="lineInput" id="sexAtBirth">
-          <option value="">Select</option>
-          <option value="female">Female</option>
-          <option value="male">Male</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="label" for="gender">Gender (optional)</label>
-        <select class="lineInput" id="gender">
-          <option value="">Select</option>
-          <option value="woman">Woman</option>
-          <option value="man">Man</option>
-          <option value="non_binary">Non-binary</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="label" for="nationality">Nationality (optional)</label>
-        <input
-          class="lineInput"
-          id="nationality"
-          type="text"
-          placeholder="e.g., British"
-          autocomplete="country-name"
-        />
-      </div>
-
-      <div class="actions">
-        <button id="saveProfileBtn" class="btnPrimary" type="submit">Save profile</button>
-      </div>
-    </form>
+    </div>
   </main>
+
 
   <!-- FOOTER -->
   <footer class="border-top mt-auto" style="background: rgba(255, 255, 255, 0.7);">
