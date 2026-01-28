@@ -95,7 +95,7 @@ body.page {
 }
 
 /* Card/panel */
-.card {
+.aa-location-card {
   max-width: 820px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.88);
@@ -105,9 +105,17 @@ body.page {
   backdrop-filter: blur(8px);
   padding: 2rem;
 }
+
 @media (max-width: 575.98px) {
-  .card {
+  .aa-location-card {
     padding: 1.5rem 1.25rem;
+    width: 90%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .form{
+    width: 100%;
   }
 }
 

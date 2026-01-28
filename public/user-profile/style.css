@@ -1,4 +1,10 @@
-:root { --aa-primary: #185f85; }
+:root {
+  --aa-primary: #185f85;
+  --aa-primary-weak: rgba(24,95,133,0.14);
+
+  --aa-danger:#dc2626;
+  --aa-danger-weak: rgba(220,38,38,0.14);
+}
 
 body { background: #f1f6fa; }
 
@@ -217,16 +223,24 @@ body { background: #f1f6fa; }
 
 /* Destructive button */
 #confirmDeleteAccountBtn.btn-danger{
-  background: var(--aa-danger);
-  border-color: var(--aa-danger);
-  font-weight: 800;
+  background-color: var(--aa-danger) !important;
+  border-color: var(--aa-danger) !important;
+  font-weight: 800 !important;
 }
-#confirmDeleteAccountBtn.btn-danger:hover{
+
+#confirmDeleteAccountBtn.btn-danger:hover,
+#confirmDeleteAccountBtn.btn-danger:focus{
+  background-color: var(--aa-danger) !important;
+  border-color: var(--aa-danger) !important;
   filter: brightness(0.95);
 }
+
 #confirmDeleteAccountBtn.btn-danger:active{
+  background-color: var(--aa-danger) !important;
+  border-color: var(--aa-danger) !important;
   filter: brightness(0.9);
 }
+
 
 /* Focus rings */
 #deleteAccountModal .btn:focus,
