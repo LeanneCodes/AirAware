@@ -18,6 +18,7 @@ describe("User model", () => {
 
       expect(db.query).toHaveBeenCalledTimes(1);
       const [sql, params] = db.query.mock.calls[0];
+      expect(sql).toMatch(/SELECT/i);
       expect(sql).toMatch(/FROM users/i);
       expect(sql).toMatch(/WHERE id = \$1/i);
       expect(params).toEqual(["user-1"]);
@@ -29,11 +30,12 @@ describe("User model", () => {
       const fakeUser = {
         id: "user-1",
         email: "a@b.com",
-        condition_type: "asthma",
-        sensitivity_level: "high",
-        accessibility_mode: false,
-        analytics_opt_in: true,
-        accepted_disclaimer_at: null,
+        first_name: "A",
+        last_name: "B",
+        date_of_birth: "2000-01-01",
+        sex_at_birth: "female",
+        gender: "female",
+        nationality: "GB",
         created_at: "2026-01-01T00:00:00.000Z",
         updated_at: "2026-01-02T00:00:00.000Z",
       };
@@ -54,7 +56,13 @@ describe("User model", () => {
       // updateById should call getById which calls db.query once
       db.query.mockResolvedValueOnce({ rows: [fakeUser] });
 
-      const result = await User.updateById("user-1", { email: "new@b.com", password_hash: "x" });
+      const result = await User.updateById("user-1", {
+        // not allowed in your model
+        email: "new@b.com",
+        password_hash: "x",
+        condition_type: "asthma",
+        analytics_opt_in: true,
+      });
 
       expect(db.query).toHaveBeenCalledTimes(1);
 
@@ -70,11 +78,8 @@ describe("User model", () => {
       const updatedRow = {
         id: "user-1",
         email: "a@b.com",
-        condition_type: "both",
-        sensitivity_level: "medium",
-        accessibility_mode: true,
-        analytics_opt_in: false,
-        accepted_disclaimer_at: null,
+        first_name: "New",
+        nationality: "FR",
         created_at: "2026-01-01T00:00:00.000Z",
         updated_at: "2026-01-03T00:00:00.000Z",
       };
@@ -82,11 +87,12 @@ describe("User model", () => {
       db.query.mockResolvedValue({ rows: [updatedRow] });
 
       const result = await User.updateById("user-1", {
-        condition_type: "both",
-        analytics_opt_in: false,
+        first_name: "New",
+        nationality: "FR",
         // not allowed — should be ignored
         email: "hack@b.com",
         password_hash: "hack",
+        condition_type: "both",
       });
 
       expect(db.query).toHaveBeenCalledTimes(1);
@@ -97,8 +103,8 @@ describe("User model", () => {
       expect(sql).toMatch(/UPDATE users/i);
 
       // It should set allowed keys
-      expect(sql).toMatch(/condition_type\s*=\s*\$1/i);
-      expect(sql).toMatch(/analytics_opt_in\s*=\s*\$2/i);
+      expect(sql).toMatch(/first_name\s*=\s*\$1/i);
+      expect(sql).toMatch(/nationality\s*=\s*\$2/i);
 
       // It should always set updated_at = NOW()
       expect(sql).toMatch(/updated_at\s*=\s*NOW\(\)/i);
@@ -107,16 +113,15 @@ describe("User model", () => {
       expect(sql).toMatch(/WHERE id\s*=\s*\$3/i);
 
       // Params should only include allowed values + userId
-      expect(params).toEqual(["both", false, "user-1"]);
+      expect(params).toEqual(["New", "FR", "user-1"]);
 
-      // Returns returned row
       expect(result).toEqual(updatedRow);
     });
 
     test("returns null when UPDATE returns no rows", async () => {
       db.query.mockResolvedValue({ rows: [] });
 
-      const result = await User.updateById("user-1", { analytics_opt_in: true });
+      const result = await User.updateById("user-1", { first_name: "X" });
 
       expect(db.query).toHaveBeenCalledTimes(1);
       expect(result).toBeNull();
@@ -124,20 +129,33 @@ describe("User model", () => {
 
     test("supports updating multiple allowed fields (parameter numbering correct)", async () => {
       db.query.mockResolvedValue({
-        rows: [{ id: "user-1", condition_type: "asthma", sensitivity_level: "low" }],
+        rows: [{ id: "user-1", first_name: "A", last_name: "B", nationality: "GB" }],
       });
 
       await User.updateById("user-1", {
-        condition_type: "asthma",
-        sensitivity_level: "low",
-        accessibility_mode: true,
+        first_name: "A",
+        last_name: "B",
+        nationality: "GB",
       });
 
       const [sql, params] = db.query.mock.calls[0];
 
       // 3 fields => id should be $4
       expect(sql).toMatch(/WHERE id\s*=\s*\$4/i);
-      expect(params).toEqual(["asthma", "low", true, "user-1"]);
+      expect(params).toEqual(["A", "B", "GB", "user-1"]);
+    });
+
+    test("date_of_birth is cast to date in SQL", async () => {
+      db.query.mockResolvedValue({
+        rows: [{ id: "user-1", date_of_birth: "1999-12-31" }],
+      });
+
+      await User.updateById("user-1", { date_of_birth: "1999-12-31" });
+
+      const [sql, params] = db.query.mock.calls[0];
+
+      expect(sql).toMatch(/date_of_birth\s*=\s*\$1::date/i);
+      expect(params).toEqual(["1999-12-31", "user-1"]);
     });
   });
 });

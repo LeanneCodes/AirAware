@@ -83,11 +83,16 @@ describe("Location page (public/location.html)", () => {
     expect(clearBtn.getAttribute("type")).toBe("button");
   });
 
-  test("success message exists and hidden by default", () => {
-    const success = document.getElementById("saveSuccess");
-    expect(success).not.toBeNull();
-    expect(success.style.display).toBe("none");
-  });
+  test("toast container exists and inline message is hidden by default", () => {
+
+  const toastContainer = document.getElementById("aaToastContainer");
+  expect(toastContainer).not.toBeNull();
+
+  const notFound = document.getElementById("notFoundMessage");
+  expect(notFound).not.toBeNull();
+  expect(notFound.style.display).toBe("none");
+});
+
 
   test("loads bootstrap bundle script", () => {
     expect(
