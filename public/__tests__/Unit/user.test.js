@@ -19,13 +19,12 @@ describe("User profile page (public/user.html)", () => {
     expect(document.title).toBe("AirAware+ | Your Profile");
   });
 
-  test("uses inline styles (external profile stylesheet is not linked)", () => {
-    const externalCss = document.querySelector('link[rel="stylesheet"][href="/user-profile/style.css"]');
-    expect(externalCss).toBeNull();
-
-    const styleTag = document.querySelector("head style");
-    expect(styleTag).not.toBeNull();
-  });
+test("loads external profile stylesheet", () => {
+  const externalCss = document.querySelector(
+    'link[rel="stylesheet"][href="/user-profile/style.css"]'
+  );
+  expect(externalCss).not.toBeNull();
+});
 
   test("navbar exists with brand logo + nav links + welcome text + profile link", () => {
     const nav = document.querySelector("nav.navbar");

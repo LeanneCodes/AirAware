@@ -6,6 +6,7 @@ jest.mock("../../../middleware/authMiddleware", () => jest.fn());
 jest.mock("../../../controllers/userController", () => ({
   getMe: jest.fn(),
   updateMe: jest.fn(),
+  deleteMe: jest.fn(), // ✅ add this so router.delete handler is a function
 }));
 
 const authMiddleware = require("../../../middleware/authMiddleware");
@@ -73,7 +74,8 @@ describe("User Routes integration", () => {
       const res = await request(app)
         .patch("/user/me")
         .set("Authorization", "Bearer token")
-        .send({ condition_type: "asthma" });
+        // ✅ use an allowed field from your controller/model
+        .send({ first_name: "Sana" });
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ route: "updateMe" });
@@ -91,13 +93,49 @@ describe("User Routes integration", () => {
 
       const res = await request(app)
         .patch("/user/me")
-        .send({ condition_type: "asthma" });
+        .send({ first_name: "Sana" });
 
       expect(res.status).toBe(401);
       expect(res.body).toEqual({ error: "Missing token" });
 
       expect(authMiddleware).toHaveBeenCalledTimes(1);
       expect(userController.updateMe).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DELETE /user/me", () => {
+    test("passes through authMiddleware and calls deleteMe", async () => {
+      const app = makeApp();
+
+      authMiddleware.mockImplementation((req, res, next) => next());
+      userController.deleteMe.mockImplementation((req, res) =>
+        res.status(204).send()
+      );
+
+      const res = await request(app)
+        .delete("/user/me")
+        .set("Authorization", "Bearer token");
+
+      expect(res.status).toBe(204);
+
+      expect(authMiddleware).toHaveBeenCalledTimes(1);
+      expect(userController.deleteMe).toHaveBeenCalledTimes(1);
+    });
+
+    test("authMiddleware blocks DELETE and controller is not called", async () => {
+      const app = makeApp();
+
+      authMiddleware.mockImplementation((req, res) =>
+        res.status(401).json({ error: "Missing token" })
+      );
+
+      const res = await request(app).delete("/user/me");
+
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: "Missing token" });
+
+      expect(authMiddleware).toHaveBeenCalledTimes(1);
+      expect(userController.deleteMe).not.toHaveBeenCalled();
     });
   });
 });
